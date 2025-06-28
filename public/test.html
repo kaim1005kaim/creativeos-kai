@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CreativeOS Test</title>
+    <style>
+        body { 
+            background: #000; 
+            color: #fff; 
+            font-family: Arial, sans-serif; 
+            padding: 2rem;
+        }
+        h1 { color: #4f46e5; }
+        .status { color: #10b981; }
+    </style>
+</head>
+<body>
+    <h1>CreativeOS テストページ</h1>
+    <div class="status">✅ 静的ページは表示できています</div>
+    <p>このページが表示されている場合、サーバーは動作しています。</p>
+    <ul>
+        <li><a href="/">メインアプリ (React)</a></li>
+        <li><a href="/api/nodes" target="_blank">API テスト (ノード一覧)</a></li>
+    </ul>
+    
+    <script>
+        // APIテスト
+        fetch('/api/nodes')
+            .then(r => r.json())
+            .then(data => {
+                console.log('API Response:', data);
+                document.body.innerHTML += '<div class="status">✅ API も動作しています: ' + data.length + ' ノード</div>';
+            })
+            .catch(e => {
+                console.error('API Error:', e);
+                document.body.innerHTML += '<div style="color: #ef4444">❌ API エラー: ' + e.message + '</div>';
+            });
+    </script>
+</body>
+</html>
