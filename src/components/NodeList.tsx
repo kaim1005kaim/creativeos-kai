@@ -11,112 +11,114 @@ interface NodeItemProps {
 }
 
 function NodeItem({ node, isSelected, onClick, onDoubleClick }: NodeItemProps) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  const styles = {
+    nodeItem: {
+      padding: '1rem',
+      borderBottom: '1px solid #333',
+      cursor: 'pointer',
+      transition: 'background-color 0.2s',
+      background: isHovered ? '#111' : 'transparent',
+      borderLeft: isSelected ? '3px solid #4f46e5' : '3px solid transparent',
+      backgroundColor: isSelected ? '#1a1a2e' : (isHovered ? '#111' : 'transparent'),
+    },
+    nodeHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      marginBottom: '0.5rem',
+    },
+    ogpImage: {
+      width: '40px',
+      height: '40px',
+      borderRadius: '4px',
+      objectFit: 'cover' as const,
+      marginRight: '0.75rem',
+    },
+    nodeMeta: {
+      flex: 1,
+      fontSize: '0.8rem',
+      color: '#888',
+    },
+    nodeDate: {
+      marginBottom: '0.25rem',
+    },
+    nodeComment: {
+      fontSize: '0.9rem',
+      marginBottom: '0.5rem',
+      fontWeight: 500,
+    },
+    nodeSummary: {
+      fontSize: '0.8rem',
+      color: '#ccc',
+      marginBottom: '0.5rem',
+      lineHeight: 1.4,
+    },
+    nodeUrl: {
+      fontSize: '0.8rem',
+    },
+    nodeUrlLink: {
+      color: '#4f46e5',
+      textDecoration: 'none',
+    },
+    nodeUrlLinkHover: {
+      textDecoration: 'underline',
+    },
+  }
+
+  const [isLinkHovered, setIsLinkHovered] = useState(false)
+
   return (
     <div 
-      className={`node-item ${isSelected ? 'selected' : ''}`}
+      style={styles.nodeItem}
       onClick={() => onClick(node)}
       onDoubleClick={() => onDoubleClick(node)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="node-header">
+      <div style={styles.nodeHeader}>
         <img 
           src={node.ogpImageUrl || `https://placehold.co/40x40/4f46e5/ffffff?text=${encodeURIComponent(node.url.slice(8, 9).toUpperCase())}`} 
           alt="OGP"
-          className="ogp-image"
+          style={styles.ogpImage}
           onError={(e) => {
             e.currentTarget.src = `https://placehold.co/40x40/4f46e5/ffffff?text=${encodeURIComponent(node.url.slice(8, 9).toUpperCase())}`
           }}
         />
-        <div className="node-meta">
-          <div className="node-date">
+        <div style={styles.nodeMeta}>
+          <div style={styles.nodeDate}>
             {new Date(node.createdAt).toLocaleDateString('ja-JP')}
           </div>
-          <div className="node-connections">
+          <div>
             {node.linkedNodeIds.length} 個の関連
           </div>
         </div>
       </div>
       
-      <div className="node-comment">
+      <div style={styles.nodeComment}>
         {node.comment}
       </div>
       
-      <div className="node-summary">
+      <div style={styles.nodeSummary}>
         {node.summary}
       </div>
       
-      <div className="node-url">
-        <a href={node.url} target="_blank" rel="noopener noreferrer">
+      <div style={styles.nodeUrl}>
+        <a 
+          href={node.url} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{
+            ...styles.nodeUrlLink,
+            ...(isLinkHovered ? styles.nodeUrlLinkHover : {})
+          }}
+          onMouseEnter={() => setIsLinkHovered(true)}
+          onMouseLeave={() => setIsLinkHovered(false)}
+          onClick={(e) => e.stopPropagation()}
+        >
           {new URL(node.url).hostname}
         </a>
       </div>
-      
-      <style jsx>{`
-        .node-item {
-          padding: 1rem;
-          border-bottom: 1px solid #333;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-        
-        .node-item:hover {
-          background: #111;
-        }
-        
-        .node-item.selected {
-          background: #1a1a2e;
-          border-left: 3px solid #4f46e5;
-        }
-        
-        .node-header {
-          display: flex;
-          align-items: center;
-          margin-bottom: 0.5rem;
-        }
-        
-        .ogp-image {
-          width: 40px;
-          height: 40px;
-          border-radius: 4px;
-          object-fit: cover;
-          margin-right: 0.75rem;
-        }
-        
-        .node-meta {
-          flex: 1;
-          font-size: 0.8rem;
-          color: #888;
-        }
-        
-        .node-date {
-          margin-bottom: 0.25rem;
-        }
-        
-        .node-comment {
-          font-size: 0.9rem;
-          margin-bottom: 0.5rem;
-          font-weight: 500;
-        }
-        
-        .node-summary {
-          font-size: 0.8rem;
-          color: #ccc;
-          margin-bottom: 0.5rem;
-          line-height: 1.4;
-        }
-        
-        .node-url {
-          font-size: 0.8rem;
-        }
-        
-        .node-url a {
-          color: #4f46e5;
-          text-decoration: none;
-        }
-        
-        .node-url a:hover {
-          text-decoration: underline;
-        }
-      `}</style>
     </div>
   )
 }
@@ -138,10 +140,36 @@ export default function NodeList() {
     ? `検索結果 (${displayNodes.length}/${nodes.length})` 
     : `ノード一覧 (${nodes.length})`
 
+  const styles = {
+    nodeList: {
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column' as const,
+      overflow: 'hidden',
+    },
+    nodeListTitle: {
+      padding: '1rem',
+      margin: 0,
+      fontSize: '1.1rem',
+      borderBottom: '1px solid #333',
+    },
+    nodeListContent: {
+      flex: 1,
+      overflowY: 'auto' as const,
+    },
+    emptyState: {
+      padding: '2rem 1rem',
+      textAlign: 'center' as const,
+      color: '#888',
+      fontSize: '0.9rem',
+      lineHeight: 1.6,
+    },
+  }
+
   return (
-    <div className="node-list">
-      <h3>{title}</h3>
-      <div className="node-list-content">
+    <div style={styles.nodeList}>
+      <h3 style={styles.nodeListTitle}>{title}</h3>
+      <div style={styles.nodeListContent}>
         {sortedNodes.map((node) => (
           <NodeItem
             key={node.id}
@@ -159,41 +187,12 @@ export default function NodeList() {
           />
         )}
         {nodes.length === 0 && (
-          <div className="empty-state">
+          <div style={styles.emptyState}>
             まだノードがありません。<br />
             上のフォームからURLとコメントを追加してください。
           </div>
         )}
       </div>
-      
-      <style jsx>{`
-        .node-list {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
-        
-        .node-list h3 {
-          padding: 1rem;
-          margin: 0;
-          font-size: 1.1rem;
-          border-bottom: 1px solid #333;
-        }
-        
-        .node-list-content {
-          flex: 1;
-          overflow-y: auto;
-        }
-        
-        .empty-state {
-          padding: 2rem 1rem;
-          text-align: center;
-          color: #888;
-          font-size: 0.9rem;
-          line-height: 1.6;
-        }
-      `}</style>
     </div>
   )
 }

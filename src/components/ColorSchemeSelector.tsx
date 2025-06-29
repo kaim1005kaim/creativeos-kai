@@ -24,13 +24,21 @@ export default function ColorSchemeSelector() {
   const legends = COLOR_LEGENDS[selectedScheme as keyof typeof COLOR_LEGENDS]
 
   return (
-    <div className="color-scheme-selector">
-      <div className="selector-header">
-        <h4>ノードの色分け</h4>
+    <div style={{ padding: '1rem', borderBottom: '1px solid #333' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+        <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#999' }}>ノードの色分け</h4>
         <button
-          className="legend-toggle"
           onClick={() => setShowLegend(!showLegend)}
           disabled={selectedScheme === 'default'}
+          style={{
+            background: '#333',
+            color: '#ccc',
+            border: 'none',
+            borderRadius: '3px',
+            padding: '0.25rem 0.5rem',
+            fontSize: '0.7rem',
+            cursor: 'pointer'
+          }}
         >
           凡例
         </button>
@@ -39,7 +47,16 @@ export default function ColorSchemeSelector() {
       <select
         value={selectedScheme}
         onChange={(e) => handleSchemeChange(e.target.value as ColorScheme)}
-        className="scheme-select"
+        style={{
+          width: '100%',
+          padding: '0.5rem',
+          border: '1px solid #555',
+          borderRadius: '4px',
+          background: '#222',
+          color: '#fff',
+          fontSize: '0.9rem',
+          cursor: 'pointer'
+        }}
       >
         {Object.entries(COLOR_SCHEME_LABELS).map(([key, label]) => (
           <option key={key} value={key}>
@@ -49,117 +66,31 @@ export default function ColorSchemeSelector() {
       </select>
       
       {showLegend && legends && (
-        <div className="color-legend">
-          <h5>凡例</h5>
-          <div className="legend-items">
+        <div style={{
+          marginTop: '1rem',
+          padding: '0.75rem',
+          background: '#111',
+          borderRadius: '4px',
+          border: '1px solid #333'
+        }}>
+          <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: '#ccc' }}>凡例</h5>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
             {legends.map((item, index) => (
-              <div key={index} className="legend-item">
-                <div 
-                  className="color-swatch"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="legend-label">{item.label}</span>
+              <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '2px',
+                  border: '1px solid #555',
+                  backgroundColor: item.color,
+                  flexShrink: 0
+                }} />
+                <span style={{ fontSize: '0.7rem', color: '#888' }}>{item.label}</span>
               </div>
             ))}
           </div>
         </div>
       )}
-      
-      <style jsx>{`
-        .color-scheme-selector {
-          padding: 1rem;
-          border-bottom: 1px solid #333;
-        }
-        
-        .selector-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 0.5rem;
-        }
-        
-        .selector-header h4 {
-          margin: 0;
-          font-size: 0.9rem;
-          color: #999;
-        }
-        
-        .legend-toggle {
-          background: #333;
-          color: #ccc;
-          border: none;
-          border-radius: 3px;
-          padding: 0.25rem 0.5rem;
-          font-size: 0.7rem;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-        
-        .legend-toggle:hover:not(:disabled) {
-          background: #444;
-        }
-        
-        .legend-toggle:disabled {
-          background: #222;
-          color: #555;
-          cursor: not-allowed;
-        }
-        
-        .scheme-select {
-          width: 100%;
-          padding: 0.5rem;
-          border: 1px solid #555;
-          border-radius: 4px;
-          background: #222;
-          color: #fff;
-          font-size: 0.9rem;
-          cursor: pointer;
-        }
-        
-        .scheme-select:focus {
-          outline: none;
-          border-color: #4f46e5;
-        }
-        
-        .color-legend {
-          margin-top: 1rem;
-          padding: 0.75rem;
-          background: #111;
-          border-radius: 4px;
-          border: 1px solid #333;
-        }
-        
-        .color-legend h5 {
-          margin: 0 0 0.5rem 0;
-          font-size: 0.8rem;
-          color: #ccc;
-        }
-        
-        .legend-items {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-        }
-        
-        .legend-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        
-        .color-swatch {
-          width: 12px;
-          height: 12px;
-          border-radius: 2px;
-          border: 1px solid #555;
-          flex-shrink: 0;
-        }
-        
-        .legend-label {
-          font-size: 0.7rem;
-          color: #888;
-        }
-      `}</style>
     </div>
   )
 }
