@@ -16,6 +16,8 @@ import TagManager from './components/TagManager'
 import Dashboard from './components/Dashboard'
 import ThemeToggle from './components/ThemeToggle'
 import GoogleLoginButton from './components/GoogleLoginButton'
+import FloatingActionButton from './components/FloatingActionButton'
+import MobileMenu from './components/MobileMenu'
 import { useNodeStore } from './store/nodes'
 import { useMockData } from './lib/mockApi'
 import { useTheme } from './contexts/ThemeContext'
@@ -30,6 +32,8 @@ function App() {
   const [selectedCluster, setSelectedCluster] = useState<Cluster | null>(null)
   const [activeTab, setActiveTab] = useState<'list' | 'clusters' | 'timeline' | 'links' | 'dashboard' | 'advanced-clusters' | 'timeline-view' | 'heatmap'>('list')
   const [user, setUser] = useState<{ id: string; email: string; name: string; picture: string } | null>(null)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     // Initialize with mock data for demo if not logged in
@@ -62,6 +66,16 @@ function App() {
         }
       }
     }
+    
+    // Check if mobile screen
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkIsMobile()
+    window.addEventListener('resize', checkIsMobile)
+    
+    return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
 
   // Load user nodes when user logs in
@@ -122,6 +136,13 @@ function App() {
     setFilteredNodes(filteredIds)
   }, [nodes, setFilteredNodes])
 
+  const handleLogout = () => {
+    setUser(null)
+    localStorage.removeItem('creativeos_user')
+    setIsMobileMenuOpen(false)
+    window.location.href = '/'
+  }
+
   return (
     <div className="app" style={{ backgroundColor: colors.background, color: colors.text }}>
       <header className="app-header" style={{ backgroundColor: colors.surface, color: colors.text }}>
@@ -145,11 +166,7 @@ function App() {
                 />
                 <span style={{ fontSize: '14px' }}>{user.name}</span>
                 <button
-                  onClick={() => {
-                    setUser(null)
-                    localStorage.removeItem('creativeos_user')
-                    window.location.href = '/'
-                  }}
+                  onClick={handleLogout}
                   style={{
                     padding: '6px 12px',
                     backgroundColor: 'transparent',
@@ -393,6 +410,19 @@ function App() {
             />
           )}
         </div>
+        
+        {/* Mobile FAB and Menu */}
+        {isMobile && (
+          <>
+            <FloatingActionButton onClick={() => setIsMobileMenuOpen(true)} />
+            <MobileMenu 
+              isOpen={isMobileMenuOpen}
+              onClose={() => setIsMobileMenuOpen(false)}
+              user={user}
+              onLogout={handleLogout}
+            />
+          </>
+        )}
       </main>
     </div>
   )
