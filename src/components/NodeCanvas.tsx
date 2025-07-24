@@ -105,7 +105,7 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
         }}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
-        scale={hovered ? 1.08 : 1.05}
+        scale={hovered ? 1.1 : 1.07}
       >
         <sphereGeometry args={[hovered ? 0.15 : 0.1, 20, 20]} />
         <meshBasicMaterial 
@@ -126,12 +126,8 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
         onPointerOut={() => setHovered(false)}
       >
         <sphereGeometry args={[hovered ? 0.15 : 0.1, 20, 20]} />
-        <meshPhongMaterial 
+        <meshBasicMaterial 
           color={nodeColor}
-          shininess={100}
-          specular="#ffffff"
-          transparent
-          opacity={0.95}
         />
       </mesh>
       <Text
