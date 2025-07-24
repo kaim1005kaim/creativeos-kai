@@ -92,7 +92,7 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
 
   return (
     <group position={node.position}>
-      {/* Red outline (OZ style) */}
+      {/* Red outline sphere (behind) - anime-style border */}
       <mesh
         ref={outlineRef}
         onClick={(event) => onClick(node, event)}
@@ -103,17 +103,15 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <sphereGeometry args={[hovered ? 0.16 : 0.115, 20, 20]} />
+        <sphereGeometry args={[hovered ? 0.155 : 0.105, 20, 20]} />
         <meshBasicMaterial 
           color="#f13321"
           transparent
-          opacity={hovered || isHighlighted ? 0.9 : 0.7}
-          wireframe={true}
-          wireframeLinewidth={2}
+          opacity={hovered || isHighlighted ? 0.8 : 0.6}
         />
       </mesh>
       
-      {/* Main colorful sphere */}
+      {/* Main colorful sphere (in front) */}
       <mesh
         ref={meshRef}
         onClick={(event) => onClick(node, event)}
@@ -130,7 +128,7 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
           shininess={100}
           specular="#ffffff"
           transparent
-          opacity={0.9}
+          opacity={0.95}
         />
       </mesh>
       <Text
