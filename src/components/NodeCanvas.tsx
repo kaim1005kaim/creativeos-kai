@@ -301,9 +301,18 @@ export function NodeCanvas() {
   }
 
   return (
-    <div ref={canvasRef} className="relative w-full h-full">
+    <div ref={canvasRef} style={{ 
+      position: 'relative', 
+      width: '100%', 
+      height: '100%', 
+      overflow: 'hidden' 
+    }}>
       <Canvas
-        style={{ background: 'linear-gradient(to bottom, #000428, #004e92)' }}
+        style={{ 
+          width: '100%', 
+          height: '100%',
+          background: 'linear-gradient(to bottom, #000428, #004e92)' 
+        }}
         camera={{ position: [0, 0, 50], fov: 60 }}
         onPointerMissed={handleCanvasClick}
         gl={{ alpha: true, antialias: true }}
