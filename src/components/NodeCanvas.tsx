@@ -31,9 +31,10 @@ interface NodeSphereProps {
   onClick: (node: ThoughtNode, event?: any) => void
   onContextMenu: (node: ThoughtNode, event?: any) => void
   isHighlighted?: boolean
+  onPositionUpdate?: (nodeId: string, position: [number, number, number]) => void
 }
 
-function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: NodeSphereProps) {
+function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false, onPositionUpdate }: NodeSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const outlineRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
@@ -78,11 +79,22 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
   useFrame((state) => {
     if (meshRef.current) {
       // OZ-style floating animation - more dynamic
-      meshRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.5 + node.position[0]) * 0.12
+      const animatedY = Math.sin(state.clock.elapsedTime * 1.5 + node.position[0]) * 0.12
+      meshRef.current.position.y = animatedY
       
       // Slight rotation for anime effect
       if (hovered || isHighlighted) {
         meshRef.current.rotation.y += 0.02
+      }
+      
+      // Update animated position for line connections
+      if (onPositionUpdate) {
+        const currentPos: [number, number, number] = [
+          node.position[0],
+          node.position[1] + animatedY,
+          node.position[2]
+        ]
+        onPositionUpdate(node.id, currentPos)
       }
     }
     
@@ -196,9 +208,10 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
 
 interface NodeConnectionsProps {
   nodes: ThoughtNode[]
+  animatedPositions: Map<string, [number, number, number]>
 }
 
-function NodeConnections({ nodes }: NodeConnectionsProps) {
+function NodeConnections({ nodes, animatedPositions }: NodeConnectionsProps) {
   const drawnConnections = new Set<string>()
   
   return (
@@ -210,11 +223,15 @@ function NodeConnections({ nodes }: NodeConnectionsProps) {
           if (drawnConnections.has(connectionKey)) return null
           drawnConnections.add(connectionKey)
           
+          // Get animated positions or fall back to static positions
+          const nodeAnimatedPos = animatedPositions.get(node.id) || node.position
+          const otherNodeAnimatedPos = animatedPositions.get(otherNode.id) || otherNode.position
+          
           // Calculate distance to determine line opacity
           const distance = Math.sqrt(
-            Math.pow(node.position[0] - otherNode.position[0], 2) +
-            Math.pow(node.position[1] - otherNode.position[1], 2) +
-            Math.pow(node.position[2] - otherNode.position[2], 2)
+            Math.pow(nodeAnimatedPos[0] - otherNodeAnimatedPos[0], 2) +
+            Math.pow(nodeAnimatedPos[1] - otherNodeAnimatedPos[1], 2) +
+            Math.pow(nodeAnimatedPos[2] - otherNodeAnimatedPos[2], 2)
           )
           
           // Closer nodes have more visible connections
@@ -227,8 +244,8 @@ function NodeConnections({ nodes }: NodeConnectionsProps) {
                   attach="attributes-position"
                   count={2}
                   array={new Float32Array([
-                    ...node.position,
-                    ...otherNode.position,
+                    ...nodeAnimatedPos,
+                    ...otherNodeAnimatedPos,
                   ])}
                   itemSize={3}
                 />
@@ -263,6 +280,8 @@ export default function NodeCanvas() {
     x: number
     y: number
   } | null>(null)
+  // Track animated positions for dynamic line connections
+  const [animatedPositions, setAnimatedPositions] = useState<Map<string, [number, number, number]>>(new Map())
 
   // Apply force layout when enabled
   useEffect(() => {
@@ -362,6 +381,14 @@ export default function NodeCanvas() {
     }
   }
 
+  const handlePositionUpdate = (nodeId: string, position: [number, number, number]) => {
+    setAnimatedPositions(prev => {
+      const newMap = new Map(prev)
+      newMap.set(nodeId, position)
+      return newMap
+    })
+  }
+
   return (
     <>
       {/* Force Layout Toggle Button */}
@@ -400,7 +427,7 @@ export default function NodeCanvas() {
         <ambientLight intensity={0.6} />
         <pointLight position={[10, 10, 10]} intensity={0.8} />
         
-        <NodeConnections nodes={layoutedNodes} />
+        <NodeConnections nodes={layoutedNodes} animatedPositions={animatedPositions} />
         
         {layoutedNodes.map((node) => {
           // Always use the latest node data from the store
@@ -414,6 +441,7 @@ export default function NodeCanvas() {
               onClick={handleNodeClick}
               onContextMenu={handleNodeContextMenu}
               isHighlighted={node.id === selectedNodeId}
+              onPositionUpdate={handlePositionUpdate}
             />
           )
         })}
