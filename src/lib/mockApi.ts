@@ -3,7 +3,7 @@ import { ThoughtNode } from '../types/ThoughtNode'
 // Mock data for demo purposes
 const MOCK_NODES: ThoughtNode[] = [
   {
-    id: "sample-1",
+    id: "sample-a1",
     url: "https://github.com/anthropics/claude-code",
     ogpImageUrl: "",
     comment: "Claude Code - AI-powered coding assistant",
@@ -12,10 +12,10 @@ const MOCK_NODES: ThoughtNode[] = [
     embedding: Array.from({length: 384}, () => Math.random() - 0.5),
     createdAt: Date.now() - 86400000,
     position: [2, 0, 3],
-    linkedNodeIds: ["sample-2"]
+    linkedNodeIds: ["sample-b5"]
   },
   {
-    id: "sample-2", 
+    id: "sample-b5", 
     url: "https://react.dev",
     ogpImageUrl: "",
     comment: "React - ユーザーインターフェース構築のためのライブラリ",
@@ -24,10 +24,10 @@ const MOCK_NODES: ThoughtNode[] = [
     embedding: Array.from({length: 384}, () => Math.random() - 0.5),
     createdAt: Date.now() - 43200000,
     position: [-2, 1, -1],
-    linkedNodeIds: ["sample-1"]
+    linkedNodeIds: ["sample-a1"]
   },
   {
-    id: "sample-3",
+    id: "sample-c9",
     url: "https://vitejs.dev",
     ogpImageUrl: "",
     comment: "Vite - 高速なフロントエンドビルドツール",
@@ -36,7 +36,7 @@ const MOCK_NODES: ThoughtNode[] = [
     embedding: Array.from({length: 384}, () => Math.random() - 0.5),
     createdAt: Date.now() - 21600000,
     position: [0, -2, 2],
-    linkedNodeIds: ["sample-2"]
+    linkedNodeIds: ["sample-b5"]
   }
 ]
 
