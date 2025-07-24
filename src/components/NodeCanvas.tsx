@@ -76,9 +76,17 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false, onPos
   
   useFrame((state) => {
     if (meshRef.current) {
-      // OZ-style floating animation - more dynamic
-      const animatedY = Math.sin(state.clock.elapsedTime * 1.5 + node.position[0]) * 0.12
+      // OZ-style floating animation - smaller, more random movement
+      const time = state.clock.elapsedTime
+      const nodeOffset = node.position[0] + node.position[2] // Use node position for uniqueness
+      
+      const animatedX = Math.sin(time * 1.2 + nodeOffset) * 0.08
+      const animatedY = Math.sin(time * 1.5 + nodeOffset + 1) * 0.08
+      const animatedZ = Math.cos(time * 1.3 + nodeOffset + 2) * 0.08
+      
+      meshRef.current.position.x = animatedX
       meshRef.current.position.y = animatedY
+      meshRef.current.position.z = animatedZ
       
       // Slight rotation for anime effect
       if (hovered || isHighlighted) {
@@ -88,9 +96,9 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false, onPos
       // Update animated position for line connections
       if (onPositionUpdate) {
         const currentPos: [number, number, number] = [
-          node.position[0],
+          node.position[0] + animatedX,
           node.position[1] + animatedY,
-          node.position[2]
+          node.position[2] + animatedZ
         ]
         onPositionUpdate(node.id, currentPos)
       }
@@ -98,7 +106,9 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false, onPos
     
     if (outlineRef.current) {
       // Sync outline with main sphere
+      outlineRef.current.position.x = meshRef.current?.position.x || 0
       outlineRef.current.position.y = meshRef.current?.position.y || 0
+      outlineRef.current.position.z = meshRef.current?.position.z || 0
       outlineRef.current.rotation.y = meshRef.current?.rotation.y || 0
     }
   })
