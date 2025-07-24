@@ -289,7 +289,8 @@ export default function NodeCanvas() {
 
   const handleEditNode = () => {
     if (contextMenu) {
-      setEditingNode(contextMenu.node)
+      // Edit functionality has been removed
+      // TODO: Implement inline editing or alternative edit method
       setContextMenu(null)
     }
   }

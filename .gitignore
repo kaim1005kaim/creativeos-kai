@@ -38,3 +38,12 @@ public/ogp_cache/
 
 # TypeScript
 *.tsbuildinfo
+
+# MCP Chrome (embedded git repository)
+mcp-chrome/
+
+# Vercel
+.vercel
+
+# Build artifacts
+*.backup
