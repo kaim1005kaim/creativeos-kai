@@ -23,7 +23,7 @@ module.exports = async function handler(req, res) {
         code: code,
         client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/google`,
+        redirect_uri: 'https://creativeos-kai.vercel.app/api/auth/callback/google',
         grant_type: 'authorization_code',
       }),
     })
@@ -93,7 +93,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Redirect to home with session data
-    res.redirect(`/?session=${encodeURIComponent(JSON.stringify(sessionData))}`)
+    res.redirect(`https://creativeos-kai.vercel.app/?session=${encodeURIComponent(JSON.stringify(sessionData))}`)
   } catch (error) {
     console.error('OAuth error:', error)
     res.status(500).json({ error: error.message || 'Internal server error' })
