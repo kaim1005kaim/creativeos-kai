@@ -56,7 +56,7 @@ export default function FilterPanel() {
       filtered = filtered.filter(node => node.linkedNodeIds.length >= (filters.minConnections || 0))
     }
 
-    setFilteredNodes(filtered)
+    setFilteredNodes(filtered.map(node => node.id))
   }
 
   const handleFilterChange = (newFilters: FilterState) => {

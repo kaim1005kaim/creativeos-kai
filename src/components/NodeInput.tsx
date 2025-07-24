@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNodeStore } from '../store/nodes'
+import { isXPostUrl } from '../lib/api'
 
 export default function NodeInput() {
   const [url, setUrl] = useState('')
@@ -15,7 +16,9 @@ export default function NodeInput() {
 
     setIsLoading(true)
     try {
-      await addNode(url.trim(), comment.trim())
+      // X URLの場合は自動的にMCPを試行（利用可能な場合）
+      const options = isXPostUrl(url) ? { useMCP: true } : undefined
+      await addNode(url.trim(), comment.trim(), options)
       setUrl('')
       setComment('')
     } catch (error) {
@@ -46,9 +49,11 @@ export default function NodeInput() {
     inputGroupField: {
       width: '100%',
       padding: '0.5rem',
-      border: '1px solid #555',
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      borderColor: '#555',
       borderRadius: '4px',
-      background: '#222',
+      backgroundColor: '#222',
       color: '#fff',
       fontSize: '0.9rem',
       fontFamily: 'inherit',
@@ -60,7 +65,7 @@ export default function NodeInput() {
     button: {
       width: '100%',
       padding: '0.75rem',
-      background: '#4f46e5',
+      backgroundColor: '#4f46e5',
       color: 'white',
       border: 'none',
       borderRadius: '4px',
@@ -69,10 +74,10 @@ export default function NodeInput() {
       transition: 'background-color 0.2s',
     },
     buttonHover: {
-      background: '#3f3ce5',
+      backgroundColor: '#3f3ce5',
     },
     buttonDisabled: {
-      background: '#555',
+      backgroundColor: '#555',
       cursor: 'not-allowed',
     },
   }

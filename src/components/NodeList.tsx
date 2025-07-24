@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNodeStore } from '../store/nodes'
 import { ThoughtNode } from '../types/ThoughtNode'
-import NodeEditModal from './NodeEditModal'
+// Note: NodeEditModal and ExportModal removed during cleanup
 
 interface NodeItemProps {
   node: ThoughtNode
@@ -12,6 +12,9 @@ interface NodeItemProps {
 
 function NodeItem({ node, isSelected, onClick, onDoubleClick }: NodeItemProps) {
   const [isHovered, setIsHovered] = useState(false)
+  
+  // Check if this is an X post
+  const isXPost = node.type === 'x-post' && node.xPostData
 
   const styles = {
     nodeItem: {
@@ -19,7 +22,6 @@ function NodeItem({ node, isSelected, onClick, onDoubleClick }: NodeItemProps) {
       borderBottom: '1px solid #333',
       cursor: 'pointer',
       transition: 'background-color 0.2s',
-      background: isHovered ? '#111' : 'transparent',
       borderLeft: isSelected ? '3px solid #4f46e5' : '3px solid transparent',
       backgroundColor: isSelected ? '#1a1a2e' : (isHovered ? '#111' : 'transparent'),
     },
@@ -47,6 +49,8 @@ function NodeItem({ node, isSelected, onClick, onDoubleClick }: NodeItemProps) {
       fontSize: '0.9rem',
       marginBottom: '0.5rem',
       fontWeight: 500,
+      wordWrap: 'break-word' as const,
+      lineHeight: 1.3,
     },
     nodeSummary: {
       fontSize: '0.8rem',
@@ -77,27 +81,102 @@ function NodeItem({ node, isSelected, onClick, onDoubleClick }: NodeItemProps) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div style={styles.nodeHeader}>
-        <img 
-          src={node.ogpImageUrl || `https://placehold.co/40x40/4f46e5/ffffff?text=${encodeURIComponent(node.url.slice(8, 9).toUpperCase())}`} 
-          alt="OGP"
-          style={styles.ogpImage}
-          onError={(e) => {
-            e.currentTarget.src = `https://placehold.co/40x40/4f46e5/ffffff?text=${encodeURIComponent(node.url.slice(8, 9).toUpperCase())}`
-          }}
-        />
-        <div style={styles.nodeMeta}>
-          <div style={styles.nodeDate}>
-            {new Date(node.createdAt).toLocaleDateString('ja-JP')}
-          </div>
-          <div>
-            {node.linkedNodeIds.length} 個の関連
-          </div>
-        </div>
+        {isXPost ? (
+          // X post header
+          <>
+            <img 
+              src={node.xPostData!.author.avatarUrl || `https://placehold.co/40x40/1DA1F2/ffffff?text=X`} 
+              alt="Avatar"
+              style={styles.ogpImage}
+              onError={(e) => {
+                e.currentTarget.src = `https://placehold.co/40x40/1DA1F2/ffffff?text=X`
+              }}
+            />
+            <div style={styles.nodeMeta}>
+              <div style={{...styles.nodeDate, display: 'flex', alignItems: 'center', gap: '8px'}}>
+                <span style={{color: '#1DA1F2', fontWeight: 'bold'}}>𝕏</span>
+                <span>{node.xPostData!.author.name}</span>
+                <span style={{color: '#888'}}>@{node.xPostData!.author.username}</span>
+              </div>
+              <div style={{fontSize: '0.75rem', color: '#888'}}>
+                {new Date(node.xPostData!.createdAt).toLocaleDateString('ja-JP')} • {node.linkedNodeIds.length} 個の関連
+              </div>
+            </div>
+          </>
+        ) : (
+          // Regular post header
+          <>
+            <img 
+              src={node.ogpImageUrl || `https://placehold.co/40x40/4f46e5/ffffff?text=${encodeURIComponent((node.url || '').slice(8, 9).toUpperCase() || 'N')}`} 
+              alt="OGP"
+              style={styles.ogpImage}
+              onError={(e) => {
+                e.currentTarget.src = `https://placehold.co/40x40/4f46e5/ffffff?text=${encodeURIComponent((node.url || '').slice(8, 9).toUpperCase() || 'N')}`
+              }}
+            />
+            <div style={styles.nodeMeta}>
+              <div style={styles.nodeDate}>
+                {new Date(node.createdAt).toLocaleDateString('ja-JP')}
+              </div>
+              <div>
+                {node.linkedNodeIds.length} 個の関連
+              </div>
+            </div>
+          </>
+        )}
       </div>
       
       <div style={styles.nodeComment}>
-        {node.comment}
+        {node.title || (isXPost ? node.xPostData!.text : node.comment)}
       </div>
+      
+      {isXPost && node.comment && (
+        <div style={{...styles.nodeSummary, fontStyle: 'italic', borderLeft: '3px solid #1DA1F2', paddingLeft: '8px'}}>
+          コメント: {node.comment}
+        </div>
+      )}
+      
+      {isXPost && node.xPostData!.images.length > 0 && (
+        <div style={{
+          display: 'flex',
+          gap: '4px',
+          marginBottom: '0.5rem',
+          flexWrap: 'wrap'
+        }}>
+          {node.xPostData!.images.slice(0, 2).map((image, index) => (
+            <img
+              key={index}
+              src={image}
+              alt={`Tweet image ${index + 1}`}
+              style={{
+                width: '60px',
+                height: '60px',
+                objectFit: 'cover',
+                borderRadius: '4px',
+                border: '1px solid #333'
+              }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+              }}
+            />
+          ))}
+          {node.xPostData!.images.length > 2 && (
+            <div style={{
+              width: '60px',
+              height: '60px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: '#333',
+              borderRadius: '4px',
+              fontSize: '12px',
+              color: '#888'
+            }}>
+              +{node.xPostData!.images.length - 2}
+            </div>
+          )}
+        </div>
+      )}
       
       <div style={styles.nodeSummary}>
         {node.summary}
@@ -116,7 +195,13 @@ function NodeItem({ node, isSelected, onClick, onDoubleClick }: NodeItemProps) {
           onMouseLeave={() => setIsLinkHovered(false)}
           onClick={(e) => e.stopPropagation()}
         >
-          {new URL(node.url).hostname}
+          {(() => {
+            try {
+              return node.url ? new URL(node.url).hostname : 'Invalid URL'
+            } catch {
+              return 'Invalid URL'
+            }
+          })()}
         </a>
       </div>
     </div>
@@ -129,8 +214,7 @@ export default function NodeList() {
   const getDisplayNodes = useNodeStore((state) => state.getDisplayNodes)
   const selectedNode = useNodeStore((state) => state.selectedNode)
   const setSelectedNode = useNodeStore((state) => state.setSelectedNode)
-  
-  const [editingNode, setEditingNode] = useState<ThoughtNode | null>(null)
+  // Note: editing and export functionality removed during cleanup
 
   const displayNodes = getDisplayNodes()
   const sortedNodes = [...displayNodes].sort((a, b) => b.createdAt - a.createdAt)
@@ -142,10 +226,7 @@ export default function NodeList() {
 
   const styles = {
     nodeList: {
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column' as const,
-      overflow: 'hidden',
+      marginBottom: '2rem',
     },
     nodeListTitle: {
       padding: '1rem',
@@ -154,8 +235,7 @@ export default function NodeList() {
       borderBottom: '1px solid #333',
     },
     nodeListContent: {
-      flex: 1,
-      overflowY: 'auto' as const,
+      // 高さの制限を取り除いて自然なレイアウトにする
     },
     emptyState: {
       padding: '2rem 1rem',
@@ -168,31 +248,38 @@ export default function NodeList() {
 
   return (
     <div style={styles.nodeList}>
-      <h3 style={styles.nodeListTitle}>{title}</h3>
-      <div style={styles.nodeListContent}>
-        {sortedNodes.map((node) => (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '1rem 0',
+        borderBottom: '1px solid #333'
+      }}>
+        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{title}</h3>
+      </div>
+      
+      {sortedNodes.map((node) => {
+        // Always use the latest node data from the store
+        const latestNode = nodes.find(n => n.id === node.id) || node
+        return (
           <NodeItem
-            key={node.id}
-            node={node}
+            key={`${node.id}-${latestNode.title || latestNode.comment}`}
+            node={latestNode}
             isSelected={selectedNode?.id === node.id}
             onClick={setSelectedNode}
-            onDoubleClick={setEditingNode}
+            onDoubleClick={() => {}} // Editing removed
           />
-        ))}
-        
-        {editingNode && (
-          <NodeEditModal
-            node={editingNode}
-            onClose={() => setEditingNode(null)}
-          />
-        )}
-        {nodes.length === 0 && (
-          <div style={styles.emptyState}>
-            まだノードがありません。<br />
-            上のフォームからURLとコメントを追加してください。
-          </div>
-        )}
-      </div>
+        )
+      })}
+      
+      {/* Note: editing and export modals removed during cleanup */}
+      
+      {nodes.length === 0 && (
+        <div style={styles.emptyState}>
+          まだノードがありません。<br />
+          上のフォームからURLとコメントを追加してください。
+        </div>
+      )}
     </div>
   )
 }

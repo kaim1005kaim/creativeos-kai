@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>X投稿スクレイピングテスト</title>
+</head>
+<body>
+    <h1>X投稿スクレイピングテスト</h1>
+    <button onclick="testXPost()">X投稿をテスト</button>
+    <div id="result"></div>
+
+    <script>
+        async function testXPost() {
+            const testUrl = 'https://x.com/elonmusk/status/1734308954947707048';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:3001/api/x-post', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: testUrl })
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <h3>結果:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h3>エラー:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

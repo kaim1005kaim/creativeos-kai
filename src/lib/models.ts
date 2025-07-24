@@ -8,8 +8,8 @@ export type LLMModel = {
 export const AVAILABLE_MODELS: LLMModel[] = [
   {
     id: 'deepseek',
-    name: 'DeepSeek-R1 (Default)',
-    apiUrl: 'http://localhost:11434/v1/chat/completions',
+    name: 'DeepSeek Chat (API)',
+    apiUrl: 'https://api.deepseek.com/v1/chat/completions',
     type: 'deepseek',
   },
   {

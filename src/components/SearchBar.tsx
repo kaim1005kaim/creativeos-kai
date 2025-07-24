@@ -12,7 +12,7 @@ export default function SearchBar() {
   useEffect(() => {
     if (query.trim()) {
       const filtered = searchNodes(nodes, query)
-      setFilteredNodes(filtered)
+      setFilteredNodes(filtered.map(node => node.id))
       
       const newSuggestions = getSearchSuggestions(nodes, query)
       setSuggestions(newSuggestions)
@@ -34,7 +34,7 @@ export default function SearchBar() {
   }
 
   return (
-    <div style={{ padding: '1rem', borderBottom: '1px solid #333', position: 'relative' }}>
+    <div style={{ padding: '1rem 0', borderBottom: '1px solid #333', position: 'relative' }}>
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
         <input
           type="text"
@@ -80,8 +80,8 @@ export default function SearchBar() {
         <div style={{
           position: 'absolute',
           top: '100%',
-          left: '1rem',
-          right: '1rem',
+          left: '0',
+          right: '0',
           background: '#333',
           border: '1px solid #555',
           borderRadius: '4px',

@@ -7,7 +7,7 @@ export default function ModelSelector() {
 
   return (
     <div style={{
-      padding: '1rem',
+      padding: '1rem 0',
       borderBottom: '1px solid #333'
     }}>
       <h4 style={{

@@ -20,18 +20,32 @@
   flex: 1;
   display: flex;
   overflow: hidden;
+  height: calc(100vh - 80px); /* ヘッダー分を引く */
 }
 
 .canvas-container {
   flex: 1;
   position: relative;
+  overflow: hidden;
+  height: 100%;
 }
 
 .sidebar {
-  width: 400px;
+  width: 450px;
   border-left: 1px solid #333;
-  display: flex;
-  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 20px;
+}
+
+.sidebar-header {
+  /* ヘッダークラスを削除して、全体をスクロール可能にする */
+}
+
+.sidebar-content {
+  /* コンテンツクラスを削除して、全体をスクロール可能にする */
 }
 
 @media (max-width: 768px) {
