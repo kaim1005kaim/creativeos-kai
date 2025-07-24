@@ -95,7 +95,7 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
 
   return (
     <group position={node.position}>
-      {/* Red outline sphere (behind) - anime-style border */}
+      {/* Red outline using A-Frame technique - scaled back-face */}
       <mesh
         ref={outlineRef}
         onClick={(event) => onClick(node, event)}
@@ -105,12 +105,12 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
         }}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
+        scale={hovered ? 1.08 : 1.05}
       >
-        <sphereGeometry args={[hovered ? 0.152 : 0.102, 20, 20]} />
+        <sphereGeometry args={[hovered ? 0.15 : 0.1, 20, 20]} />
         <meshBasicMaterial 
           color="#f13321"
-          transparent
-          opacity={hovered || isHighlighted ? 0.5 : 0.3}
+          side={THREE.BackSide}
         />
       </mesh>
       
