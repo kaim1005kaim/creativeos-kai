@@ -105,7 +105,7 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
         }}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
-        scale={hovered ? 1.1 : 1.07}
+        scale={hovered ? 1.09 : 1.06}
       >
         <sphereGeometry args={[hovered ? 0.15 : 0.1, 20, 20]} />
         <meshBasicMaterial 
