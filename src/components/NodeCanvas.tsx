@@ -282,7 +282,7 @@ export default function NodeCanvas() {
   // Note: editing functionality removed during cleanup
   const deleteNode = useNodeStore((state) => state.deleteNode)
   const [layoutedNodes, setLayoutedNodes] = useState<ThoughtNode[]>([])
-  const [useForceLayout, setUseForceLayout] = useState(false)
+  const [useForceLayout, setUseForceLayout] = useState(true)
   const [contextMenu, setContextMenu] = useState<{
     node: ThoughtNode
     x: number
@@ -399,31 +399,66 @@ export default function NodeCanvas() {
 
   return (
     <>
-      {/* Force Layout Toggle Button */}
+      {/* OZ-style Layout Toggle */}
       <div style={{
         position: 'absolute',
-        top: '10px',
-        right: '10px',
+        top: '20px',
+        right: '20px',
         zIndex: 1000,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        borderRadius: '6px',
-        padding: '8px'
-      }}>
-        <button
-          onClick={toggleForceLayout}
-          style={{
-            padding: '6px 12px',
-            backgroundColor: useForceLayout ? '#4ecdc4' : '#666',
-            color: useForceLayout ? '#000' : '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
+        fontFamily: '"Orbitron", "Noto Sans JP", monospace',
+        cursor: 'pointer',
+        userSelect: 'none'
+      }}
+      onClick={toggleForceLayout}
+      >
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(78, 205, 196, 0.9) 0%, rgba(69, 183, 209, 0.9) 100%)',
+          border: '2px solid #f13321',
+          borderRadius: '12px',
+          padding: '12px 20px',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 32px rgba(241, 51, 33, 0.3)',
+          transition: 'all 0.3s ease',
+          transform: 'perspective(1000px) rotateX(5deg)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) rotateX(0deg) scale(1.05)'
+          e.currentTarget.style.boxShadow = '0 12px 40px rgba(241, 51, 33, 0.5)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'perspective(1000px) rotateX(5deg) scale(1)'
+          e.currentTarget.style.boxShadow = '0 8px 32px rgba(241, 51, 33, 0.3)'
+        }}
         >
-          {useForceLayout ? '🎯 類似度レイアウト' : '📍 固定レイアウト'}
-        </button>
+          <div style={{
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: '700',
+            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+            letterSpacing: '1px',
+            textTransform: 'uppercase'
+          }}>
+            <span style={{ 
+              color: '#f13321',
+              fontSize: '16px',
+              marginRight: '8px',
+              filter: 'drop-shadow(0 0 4px rgba(241, 51, 33, 0.8))'
+            }}>
+              {useForceLayout ? '◉' : '◎'}
+            </span>
+            {useForceLayout ? 'SIMILARITY' : 'FIXED'}
+          </div>
+          <div style={{
+            color: '#ffffff',
+            fontSize: '10px',
+            fontWeight: '400',
+            opacity: 0.9,
+            marginTop: '2px',
+            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)'
+          }}>
+            {useForceLayout ? 'AI CLUSTERING' : 'STATIC GRID'}
+          </div>
+        </div>
       </div>
       
       <Canvas 
