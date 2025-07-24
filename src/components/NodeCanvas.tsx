@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
+import * as THREE from 'three'
 import { useNodeStore } from '../store/nodes'
 import { ThoughtNode } from '../types/ThoughtNode'
 // Note: NodeEditModal removed during cleanup
@@ -34,14 +35,30 @@ interface NodeSphereProps {
 
 function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: NodeSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null)
+  const outlineRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
   
-  // Determine node color based on type and connections
+  // OZ-inspired colorful node colors (Summer Wars style)
+  const ozColors = [
+    '#ff6b9d', // Pink
+    '#4ecdc4', // Cyan
+    '#45b7d1', // Blue
+    '#96ceb4', // Green
+    '#ffd93d', // Yellow
+    '#ff9f43', // Orange
+    '#a8e6cf', // Light green
+    '#ff8a80', // Light red
+    '#82b1ff', // Light blue
+    '#ce93d8', // Purple
+    '#ffab40', // Amber
+    '#80cbc4'  // Teal
+  ]
+  
+  // Assign color based on node ID for consistency
+  const colorIndex = parseInt(node.id.slice(-2), 16) % ozColors.length
   const nodeColor = node.type === 'x-post' 
-    ? '#1DA1F2' // Twitter blue
-    : node.linkedNodeIds.length > 2 
-      ? '#22c55e' 
-      : '#71717a'
+    ? '#ff6b9d' // Special pink for X posts
+    : ozColors[colorIndex]
   
   // Force re-render when node data changes
   const displayText = useMemo(() => {
@@ -57,13 +74,46 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
   
   useFrame((state) => {
     if (meshRef.current) {
-      // Subtle floating animation
-      meshRef.current.position.y = Math.sin(state.clock.elapsedTime + node.position[0]) * 0.09
+      // OZ-style floating animation - more dynamic
+      meshRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.5 + node.position[0]) * 0.12
+      
+      // Slight rotation for anime effect
+      if (hovered || isHighlighted) {
+        meshRef.current.rotation.y += 0.02
+      }
+    }
+    
+    if (outlineRef.current) {
+      // Sync outline with main sphere
+      outlineRef.current.position.y = meshRef.current?.position.y || 0
+      outlineRef.current.rotation.y = meshRef.current?.rotation.y || 0
     }
   })
 
   return (
     <group position={node.position}>
+      {/* Red outline (OZ style) */}
+      <mesh
+        ref={outlineRef}
+        onClick={(event) => onClick(node, event)}
+        onContextMenu={(event) => {
+          event.stopPropagation()
+          onContextMenu(node, event)
+        }}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <sphereGeometry args={[hovered ? 0.16 : 0.115, 20, 20]} />
+        <meshBasicMaterial 
+          color="#f13321"
+          transparent
+          opacity={hovered || isHighlighted ? 0.9 : 0.7}
+          wireframe={true}
+          wireframeLinewidth={2}
+        />
+      </mesh>
+      
+      {/* Main colorful sphere */}
       <mesh
         ref={meshRef}
         onClick={(event) => onClick(node, event)}
@@ -74,19 +124,25 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <sphereGeometry args={[hovered ? 0.15 : 0.1, 16, 16]} />
-        <meshBasicMaterial 
-          color={isHighlighted ? '#3b82f6' : nodeColor}
-          opacity={1}
+        <sphereGeometry args={[hovered ? 0.15 : 0.1, 20, 20]} />
+        <meshPhongMaterial 
+          color={nodeColor}
+          shininess={100}
+          specular="#ffffff"
+          transparent
+          opacity={0.9}
         />
       </mesh>
       <Text
         position={[0, 0.4, 0]}
-        fontSize={0.15}
-        color="#171717"
+        fontSize={0.14}
+        color="#2d3748"
         anchorX="center"
         anchorY="middle"
-        fillOpacity={hovered || isHighlighted ? 1 : 0.7}
+        outlineWidth={0.01}
+        outlineColor="#ffffff"
+        fillOpacity={hovered || isHighlighted ? 1 : 0.8}
+        fontWeight="bold"
       >
         {displayText}
       </Text>
@@ -94,38 +150,45 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
         <Text
           position={[0, 0.6, 0]}
           fontSize={0.1}
-          color="#666666"
+          color="#4a5568"
           anchorX="center"
           anchorY="middle"
-          fillOpacity={0.8}
+          outlineWidth={0.005}
+          outlineColor="#ffffff"
+          fillOpacity={0.9}
         >
           {node.xPostData.author.name}
         </Text>
       )}
       
-      {/* Category badge */}
+      {/* Category badge - OZ style */}
       {node.category && (hovered || isHighlighted) && (
         <Text
           position={[0, -0.4, 0]}
           fontSize={0.08}
-          color="#3b82f6"
+          color="#f13321"
           anchorX="center"
           anchorY="middle"
-          fillOpacity={0.9}
+          outlineWidth={0.005}
+          outlineColor="#ffffff"
+          fillOpacity={0.95}
+          fontWeight="bold"
         >
           📁 {node.category}
         </Text>
       )}
       
-      {/* Tags badges */}
+      {/* Tags badges - OZ style */}
       {node.tags && node.tags.length > 0 && (hovered || isHighlighted) && (
         <Text
           position={[0, -0.6, 0]}
           fontSize={0.07}
-          color="#10b981"
+          color="#2d3748"
           anchorX="center"
           anchorY="middle"
-          fillOpacity={0.8}
+          outlineWidth={0.005}
+          outlineColor="#ffffff"
+          fillOpacity={0.9}
         >
           🏷️ {node.tags.slice(0, 3).join(' • ')}
         </Text>
