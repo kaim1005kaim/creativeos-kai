@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Text } from '@react-three/drei'
+import { OrbitControls, Text, Stars } from '@react-three/drei'
 import { useNodeStore } from '../store/nodes'
 import { ThoughtNode } from '../types/ThoughtNode'
-// Note: NodeEditModal removed during cleanup
+import { SynapseConnection } from './SynapseConnection'
 import { calculateForceLayout } from '../lib/forceLayout'
+import * as THREE from 'three'
 
 // Helper function to clean up title text
 function cleanTitle(title: string): string {
@@ -34,14 +35,16 @@ interface NodeSphereProps {
 
 function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: NodeSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null)
+  const glowRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
+  const time = useRef(0)
   
-  // Determine node color based on type and connections
+  // Synapse-like colors
   const nodeColor = node.type === 'x-post' 
-    ? '#1DA1F2' // Twitter blue
+    ? '#00bfff' // Bright cyan for X posts
     : node.linkedNodeIds.length > 2 
-      ? '#22c55e' 
-      : '#71717a'
+      ? '#ff00ff' // Magenta for hub nodes
+      : '#00ffff' // Cyan for regular nodes
   
   // Force re-render when node data changes
   const displayText = useMemo(() => {
@@ -49,21 +52,51 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
     if (node.title) {
       return cleanTitle(node.title).substring(0, 20)
     }
-    // Otherwise, use X post text or comment
-    return node.type === 'x-post' && node.xPostData
-      ? `@${node.xPostData.author.username}: ${node.xPostData.text.substring(0, 20)}...`
-      : node.comment.substring(0, 20)
-  }, [node.type, node.xPostData, node.title, node.comment])
-  
-  useFrame((state) => {
+    
+    // For X posts, use cleaned text if available
+    if (node.type === 'x-post' && node.xPostData?.text) {
+      return node.xPostData.text.substring(0, 20) + '...'
+    }
+    
+    // Fall back to comment
+    return node.comment.substring(0, 20)
+  }, [node.title, node.type, node.xPostData, node.comment])
+
+  useFrame((state, delta) => {
+    time.current += delta
+    
     if (meshRef.current) {
+      // Pulsing effect
+      const baseScale = hovered || isHighlighted ? 1.2 : 1
+      const pulse = Math.sin(time.current * 2) * 0.05
+      meshRef.current.scale.setScalar(baseScale + pulse)
+      
       // Subtle floating animation
       meshRef.current.position.y = Math.sin(state.clock.elapsedTime + node.position[0]) * 0.09
+    }
+    
+    if (glowRef.current) {
+      // Glow animation
+      glowRef.current.scale.setScalar(1.5 + Math.sin(time.current * 3) * 0.2)
+      ;(glowRef.current.material as THREE.MeshBasicMaterial).opacity = 
+        0.3 + Math.sin(time.current * 2) * 0.1
     }
   })
 
   return (
     <group position={node.position}>
+      {/* Glow effect */}
+      <mesh ref={glowRef}>
+        <sphereGeometry args={[0.7, 32, 32]} />
+        <meshBasicMaterial
+          color={nodeColor}
+          transparent
+          opacity={0.3}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+      
+      {/* Main node */}
       <mesh
         ref={meshRef}
         onClick={(event) => onClick(node, event)}
@@ -74,27 +107,32 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <sphereGeometry args={[hovered ? 0.15 : 0.1, 16, 16]} />
-        <meshBasicMaterial 
-          color={isHighlighted ? '#3b82f6' : nodeColor}
-          opacity={1}
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshPhongMaterial
+          color={nodeColor}
+          emissive={nodeColor}
+          emissiveIntensity={0.2}
+          shininess={100}
         />
       </mesh>
+      
+      {/* Text label */}
       <Text
-        position={[0, 0.4, 0]}
+        position={[0, -0.8, 0]}
         fontSize={0.15}
-        color="#171717"
+        color="#ffffff"
         anchorX="center"
         anchorY="middle"
-        fillOpacity={hovered || isHighlighted ? 1 : 0.7}
+        outlineWidth={0.02}
+        outlineColor="#000000"
       >
         {displayText}
       </Text>
       {node.type === 'x-post' && node.xPostData && (hovered || isHighlighted) && (
         <Text
-          position={[0, 0.6, 0]}
+          position={[0, -1.1, 0]}
           fontSize={0.1}
-          color="#666666"
+          color="#aaaaaa"
           anchorX="center"
           anchorY="middle"
           fillOpacity={0.8}
@@ -102,185 +140,124 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
           {node.xPostData.author.name}
         </Text>
       )}
-      
-      {/* Category badge */}
-      {node.category && (hovered || isHighlighted) && (
-        <Text
-          position={[0, -0.4, 0]}
-          fontSize={0.08}
-          color="#3b82f6"
-          anchorX="center"
-          anchorY="middle"
-          fillOpacity={0.9}
-        >
-          📁 {node.category}
-        </Text>
-      )}
-      
-      {/* Tags badges */}
-      {node.tags && node.tags.length > 0 && (hovered || isHighlighted) && (
-        <Text
-          position={[0, -0.6, 0]}
-          fontSize={0.07}
-          color="#10b981"
-          anchorX="center"
-          anchorY="middle"
-          fillOpacity={0.8}
-        >
-          🏷️ {node.tags.slice(0, 3).join(' • ')}
-        </Text>
-      )}
     </group>
   )
 }
 
-interface NodeConnectionsProps {
-  nodes: ThoughtNode[]
+interface ConnectionLineProps {
+  start: [number, number, number]
+  end: [number, number, number]
 }
 
-function NodeConnections({ nodes }: NodeConnectionsProps) {
-  const drawnConnections = new Set<string>()
-  
+function ConnectionLine({ start, end }: ConnectionLineProps) {
+  const ref = useRef<THREE.BufferGeometry>(null)
+
+  useEffect(() => {
+    if (ref.current) {
+      const positions = new Float32Array([...start, ...end])
+      ref.current.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    }
+  }, [start, end])
+
   return (
-    <>
-      {nodes.flatMap((node, i) =>
-        nodes.slice(i + 1).map((otherNode) => {
-          // Create connection between every pair of nodes
-          const connectionKey = [node.id, otherNode.id].sort().join('-')
-          if (drawnConnections.has(connectionKey)) return null
-          drawnConnections.add(connectionKey)
-          
-          // Calculate distance to determine line opacity
-          const distance = Math.sqrt(
-            Math.pow(node.position[0] - otherNode.position[0], 2) +
-            Math.pow(node.position[1] - otherNode.position[1], 2) +
-            Math.pow(node.position[2] - otherNode.position[2], 2)
-          )
-          
-          // Closer nodes have more visible connections
-          const opacity = Math.max(0.05, 0.3 - distance * 0.02)
-          
-          return (
-            <line key={connectionKey}>
-              <bufferGeometry>
-                <bufferAttribute
-                  attach="attributes-position"
-                  count={2}
-                  array={new Float32Array([
-                    ...node.position,
-                    ...otherNode.position,
-                  ])}
-                  itemSize={3}
-                />
-              </bufferGeometry>
-              <lineBasicMaterial 
-                color="#000000" 
-                opacity={opacity}
-                transparent
-                linewidth={1}
-              />
-            </line>
-          )
-        })
-      )}
-    </>
+    <line>
+      <bufferGeometry ref={ref} />
+      <lineBasicMaterial color="#444444" opacity={0.6} transparent />
+    </line>
   )
 }
 
-export default function NodeCanvas() {
-  const nodes = useNodeStore((state) => state.nodes)
-  const filteredNodes = useNodeStore((state) => state.filteredNodes)
-  const getDisplayNodes = useNodeStore((state) => state.getDisplayNodes)
-  const setSelectedNode = useNodeStore((state) => state.setSelectedNode)
-  const setSelectedNodeId = useNodeStore((state) => state.setSelectedNodeId)
-  const selectedNodeId = useNodeStore((state) => state.selectedNodeId)
-  // Note: editing functionality removed during cleanup
-  const deleteNode = useNodeStore((state) => state.deleteNode)
-  const [layoutedNodes, setLayoutedNodes] = useState<ThoughtNode[]>([])
-  const [useForceLayout, setUseForceLayout] = useState(false)
-  const [contextMenu, setContextMenu] = useState<{
-    node: ThoughtNode
-    x: number
-    y: number
-  } | null>(null)
+export function NodeCanvas() {
+  const { nodes, deleteNode } = useNodeStore()
+  const [filters] = useState({ categories: [], tags: [], timeRange: null })
+  const [searchQuery] = useState('')
+  const [contextMenu, setContextMenu] = useState<{ node: ThoughtNode; position: [number, number] } | null>(null)
+  const [highlightedNodeIds, setHighlightedNodeIds] = useState<Set<string>>(new Set())
+  const canvasRef = useRef<HTMLDivElement>(null)
 
-  // Apply force layout when enabled
+  // Apply force-directed layout
   useEffect(() => {
-    const displayNodes = getDisplayNodes()
-    if (useForceLayout && displayNodes.length > 1) {
-      const newLayoutedNodes = calculateForceLayout(displayNodes, {
-        iterations: 30,
-        repulsionStrength: 150,
-        attractionStrength: 0.08,
-        similarityThreshold: 0.4
-      })
-      setLayoutedNodes(newLayoutedNodes)
-    } else {
-      setLayoutedNodes(displayNodes)
+    if (nodes.length > 0 && nodes.every(n => n.position[0] === 0 && n.position[1] === 0)) {
+      const newPositions = calculateForceLayout(nodes)
+      // TODO: Implement updateNodePositions in store if needed
+      console.log('New positions calculated:', newPositions)
     }
-  }, [nodes, filteredNodes, useForceLayout, getDisplayNodes])
+  }, [nodes])
 
-  // Update positions when nodes change but preserve existing positions
-  useEffect(() => {
-    setLayoutedNodes(currentLayouted => {
-      const displayNodes = getDisplayNodes()
-      return displayNodes.map(node => {
-        const existing = currentLayouted.find(n => n.id === node.id)
-        return existing ? { ...node, position: existing.position } : node
+  // Filter nodes based on search and filters
+  const filteredNodes = useMemo(() => {
+    return nodes.filter(node => {
+      // Search filter
+      if (searchQuery && !node.comment.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          !node.summary.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false
+      }
+      
+      // Category filter
+      if (filters.categories.length > 0 && !filters.categories.includes(node.category || 'その他')) {
+        return false
+      }
+      
+      // Tag filter
+      if (filters.tags.length > 0 && !filters.tags.some(tag => node.tags?.includes(tag))) {
+        return false
+      }
+      
+      // Time filter
+      if (filters.timeRange) {
+        const nodeDate = new Date(node.createdAt)
+        const now = new Date()
+        const dayInMs = 24 * 60 * 60 * 1000
+        
+        switch (filters.timeRange) {
+          case 'today':
+            if (now.getTime() - nodeDate.getTime() > dayInMs) return false
+            break
+          case 'week':
+            if (now.getTime() - nodeDate.getTime() > 7 * dayInMs) return false
+            break
+          case 'month':
+            if (now.getTime() - nodeDate.getTime() > 30 * dayInMs) return false
+            break
+        }
+      }
+      
+      return true
+    })
+  }, [nodes, searchQuery, filters])
+
+  // Calculate connections for filtered nodes
+  const connections = useMemo(() => {
+    const nodeIds = new Set(filteredNodes.map(n => n.id))
+    const links: Array<[string, string]> = []
+    
+    filteredNodes.forEach(node => {
+      node.linkedNodeIds.forEach(linkedId => {
+        if (nodeIds.has(linkedId) && node.id < linkedId) {
+          links.push([node.id, linkedId])
+        }
       })
     })
-  }, [nodes, getDisplayNodes])
-
-  // Close context menu on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setContextMenu(null)
-      }
-    }
     
-    if (contextMenu) {
-      document.addEventListener('keydown', handleKeyDown)
-      return () => document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [contextMenu])
+    return links
+  }, [filteredNodes])
 
-  const handleNodeClick = (node: ThoughtNode, event?: any) => {
-    // 常に最新のノード情報を取得
-    const latestNode = nodes.find(n => n.id === node.id) || node
-    
-    // Ctrl/Cmd + Click
-    if (event && (event.ctrlKey || event.metaKey)) {
-      handleNodeContextMenu(node, event)
-    } else {
-      // Normal click - navigate to URL
-      if (latestNode.url) {
-        window.open(latestNode.url, '_blank')
-      }
-    }
+  const handleNodeClick = (node: ThoughtNode) => {
+    window.open(node.url, '_blank')
   }
 
-  const handleNodeContextMenu = (node: ThoughtNode, event?: any) => {
-    // 常に最新のノード情報を取得
-    const latestNode = nodes.find(n => n.id === node.id) || node
-    
-    setSelectedNode(latestNode)
-    setSelectedNodeId(node.id)
-    
-    // Get mouse position for context menu
-    const rect = document.querySelector('canvas')?.getBoundingClientRect()
-    const x = event?.clientX || (rect ? rect.left + 100 : 100)
-    const y = event?.clientY || (rect ? rect.top + 100 : 100)
-    
-    setContextMenu({
-      node: latestNode,
-      x,
-      y
-    })
-  }
-
-  const toggleForceLayout = () => {
-    setUseForceLayout(!useForceLayout)
+  const handleNodeContextMenu = (node: ThoughtNode, event: any) => {
+    event.nativeEvent.preventDefault()
+    const rect = canvasRef.current?.getBoundingClientRect()
+    if (rect) {
+      setContextMenu({
+        node,
+        position: [
+          event.nativeEvent.clientX - rect.left,
+          event.nativeEvent.clientY - rect.top
+        ]
+      })
+    }
   }
 
   const handleCanvasClick = () => {
@@ -302,137 +279,118 @@ export default function NodeCanvas() {
     }
   }
 
-  return (
-    <>
-      {/* Force Layout Toggle Button */}
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        right: '10px',
-        zIndex: 1000,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        borderRadius: '6px',
-        padding: '8px'
-      }}>
-        <button
-          onClick={toggleForceLayout}
-          style={{
-            padding: '6px 12px',
-            backgroundColor: useForceLayout ? '#4ecdc4' : '#666',
-            color: useForceLayout ? '#000' : '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          {useForceLayout ? '🎯 類似度レイアウト' : '📍 固定レイアウト'}
-        </button>
-      </div>
+  const handleSearchRelated = () => {
+    if (contextMenu) {
+      // Highlight connected nodes
+      const connectedIds = new Set([contextMenu.node.id])
+      contextMenu.node.linkedNodeIds.forEach(id => connectedIds.add(id))
       
-      <Canvas 
-        camera={{ position: [15, 15, 15], fov: 50 }}
-        style={{ background: '#ffffff' }}
-        onClick={handleCanvasClick}
-        onContextMenu={(e) => e.preventDefault()}
+      // Also add nodes that link to this node
+      nodes.forEach(node => {
+        if (node.linkedNodeIds.includes(contextMenu.node.id)) {
+          connectedIds.add(node.id)
+        }
+      })
+      
+      setHighlightedNodeIds(connectedIds)
+      setContextMenu(null)
+      
+      // Clear highlights after 5 seconds
+      setTimeout(() => setHighlightedNodeIds(new Set()), 5000)
+    }
+  }
+
+  return (
+    <div ref={canvasRef} className="relative w-full h-full">
+      <Canvas
+        style={{ background: 'linear-gradient(to bottom, #000428, #004e92)' }}
+        camera={{ position: [0, 0, 50], fov: 60 }}
+        onPointerMissed={handleCanvasClick}
+        gl={{ alpha: true, antialias: true }}
       >
-        <ambientLight intensity={0.6} />
-        <pointLight position={[10, 10, 10]} intensity={0.8} />
+        {/* Space background */}
+        <Stars
+          radius={100}
+          depth={50}
+          count={5000}
+          factor={4}
+          saturation={0}
+          fade
+          speed={1}
+        />
         
-        <NodeConnections nodes={layoutedNodes} />
-        
-        {layoutedNodes.map((node) => {
-          // Always use the latest node data from the store
-          const latestNode = nodes.find(n => n.id === node.id) || node
-          const nodeWithUpdatedPosition = { ...latestNode, position: node.position }
-          const titleHash = (latestNode.title || latestNode.comment || '').slice(0, 10)
+        {/* Lighting for synapse effect */}
+        <ambientLight intensity={0.1} />
+        <pointLight position={[10, 10, 10]} intensity={0.5} color="#00ffff" />
+        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff00ff" />
+
+        {/* Render synapse connections */}
+        {connections.map(([startId, endId], index) => {
+          const startNode = filteredNodes.find(n => n.id === startId)
+          const endNode = filteredNodes.find(n => n.id === endId)
+          if (!startNode || !endNode) return null
+
           return (
-            <NodeSphere
-              key={`${node.id}-${titleHash}`}
-              node={nodeWithUpdatedPosition}
-              onClick={handleNodeClick}
-              onContextMenu={handleNodeContextMenu}
-              isHighlighted={node.id === selectedNodeId}
+            <SynapseConnection
+              key={`${startId}-${endId}-${index}`}
+              startNode={startNode}
+              endNode={endNode}
+              color="#00ffff"
             />
           )
         })}
-        
-        <OrbitControls 
-          enablePan={true} 
-          enableZoom={true} 
-          enableRotate={true}
-          autoRotate
-          autoRotateSpeed={0.3}
-          minDistance={5}
-          maxDistance={50}
+
+        {/* Render nodes */}
+        {filteredNodes.map(node => (
+          <NodeSphere
+            key={node.id}
+            node={node}
+            onClick={handleNodeClick}
+            onContextMenu={handleNodeContextMenu}
+            isHighlighted={highlightedNodeIds.has(node.id)}
+          />
+        ))}
+
+        <OrbitControls
+          enableDamping
+          dampingFactor={0.05}
+          rotateSpeed={0.5}
+          zoomSpeed={0.5}
         />
         
-        {/* Add fog for depth with white background */}
-        <fog attach="fog" args={['#ffffff', 15, 60]} />
+        {/* Fog effect for depth */}
+        <fog attach="fog" args={['#000428', 50, 200]} />
       </Canvas>
-      
-      {/* Note: editing modal removed during cleanup */}
-      
+
       {/* Context Menu */}
       {contextMenu && (
         <div
+          className="absolute bg-white rounded-lg shadow-lg py-2 z-50"
           style={{
-            position: 'fixed',
-            top: contextMenu.y,
-            left: contextMenu.x,
-            backgroundColor: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '6px',
-            padding: '8px 0',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-            zIndex: 2000,
-            minWidth: '150px'
+            left: contextMenu.position[0],
+            top: contextMenu.position[1],
           }}
-          onClick={(e) => e.stopPropagation()}
         >
           <button
             onClick={handleEditNode}
-            style={{
-              width: '100%',
-              padding: '8px 16px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: '#fff',
-              textAlign: 'left',
-              fontSize: '14px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#333'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
           >
-            ✏️ ノードを編集
+            編集
+          </button>
+          <button
+            onClick={handleSearchRelated}
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+          >
+            関連ノードを表示
           </button>
           <button
             onClick={handleDeleteNode}
-            style={{
-              width: '100%',
-              padding: '8px 16px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: '#ff6b6b',
-              textAlign: 'left',
-              fontSize: '14px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#333'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
           >
-            🗑️ ノードを削除
+            削除
           </button>
         </div>
       )}
-    </>
+    </div>
   )
 }
