@@ -35,7 +35,7 @@ function fromDbNode(dbNode: DatabaseNode): ThoughtNode {
     linkedNodeIds: dbNode.linked_node_ids || [],
     tags: dbNode.tags,
     category: dbNode.category,
-    type: dbNode.type,
+    type: (dbNode.type as 'default' | 'x-post') || 'default',
     xPostData: dbNode.x_post_data
   }
 }
