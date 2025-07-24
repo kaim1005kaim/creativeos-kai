@@ -15,6 +15,7 @@ import AdvancedSearch from './components/AdvancedSearch'
 import TagManager from './components/TagManager'
 import Dashboard from './components/Dashboard'
 import ThemeToggle from './components/ThemeToggle'
+import GoogleLoginButton from './components/GoogleLoginButton'
 import { useNodeStore } from './store/nodes'
 import { useMockData } from './lib/mockApi'
 import { useTheme } from './contexts/ThemeContext'
@@ -28,11 +29,38 @@ function App() {
   const { colors } = useTheme()
   const [selectedCluster, setSelectedCluster] = useState<Cluster | null>(null)
   const [activeTab, setActiveTab] = useState<'list' | 'clusters' | 'timeline' | 'links' | 'dashboard' | 'advanced-clusters' | 'timeline-view' | 'heatmap'>('list')
+  const [user, setUser] = useState<{ id: string; email: string; name: string; picture: string } | null>(null)
 
   useEffect(() => {
     // Initialize with mock data for demo
     if (nodes.length === 0) {
       useNodeStore.setState({ nodes: mockNodes })
+    }
+    
+    // Check for session info in URL (temporary auth handling)
+    const urlParams = new URLSearchParams(window.location.search)
+    const sessionParam = urlParams.get('session')
+    if (sessionParam) {
+      try {
+        const sessionData = JSON.parse(decodeURIComponent(sessionParam))
+        setUser(sessionData)
+        // Store in localStorage for persistence
+        localStorage.setItem('creativeos_user', JSON.stringify(sessionData))
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname)
+      } catch (e) {
+        console.error('Failed to parse session data:', e)
+      }
+    } else {
+      // Check localStorage for existing session
+      const storedUser = localStorage.getItem('creativeos_user')
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser))
+        } catch (e) {
+          console.error('Failed to parse stored user:', e)
+        }
+      }
     }
   }, [])
 
@@ -83,8 +111,51 @@ function App() {
   return (
     <div className="app" style={{ backgroundColor: colors.background, color: colors.text }}>
       <header className="app-header" style={{ backgroundColor: colors.surface, color: colors.text }}>
-        <h1>CreativeOS</h1>
-        <p>AI-Powered Knowledge Graph Visualization</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1>CreativeOS</h1>
+            <p>AI-Powered Knowledge Graph Visualization</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <img 
+                  src={user.picture} 
+                  alt={user.name}
+                  style={{ 
+                    width: '32px', 
+                    height: '32px', 
+                    borderRadius: '50%',
+                    border: '2px solid ' + colors.primary
+                  }}
+                />
+                <span style={{ fontSize: '14px' }}>{user.name}</span>
+                <button
+                  onClick={() => {
+                    setUser(null)
+                    localStorage.removeItem('creativeos_user')
+                    window.location.href = '/'
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: 'transparent',
+                    color: colors.text,
+                    border: '1px solid ' + colors.text,
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ログアウト
+                </button>
+              </div>
+            ) : (
+              <div style={{ width: '200px' }}>
+                <GoogleLoginButton />
+              </div>
+            )}
+          </div>
+        </div>
       </header>
       <main className="app-main">
         <div className="canvas-container">
