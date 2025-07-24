@@ -60,6 +60,9 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
     ? '#4ecdc4' // Special cyan for X posts (instead of red)
     : ozColors[colorIndex]
   
+  // Debug: log color assignment
+  console.log(`Node ${node.id}: slice(-2)="${node.id.slice(-2)}", parseInt=${parseInt(node.id.slice(-2), 16)}, colorIndex=${colorIndex}, color=${nodeColor}`)
+  
   // Force re-render when node data changes
   const displayText = useMemo(() => {
     // If title is explicitly set, always use it first
