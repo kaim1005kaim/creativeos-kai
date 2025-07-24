@@ -3,6 +3,7 @@ import { ThoughtNode } from '../types/ThoughtNode'
 import { generateSummary, generateTitle, getOGPMetadata, getXPostData, getXPostDataViaMCP, isXPostUrl, extractTags } from '../lib/api'
 import { useModelStore } from './model'
 import { calculateSimilarity } from '../lib/similarity'
+import { nodeDb } from '../lib/nodeDb'
 
 interface NodeStore {
   nodes: ThoughtNode[]
@@ -11,6 +12,7 @@ interface NodeStore {
   selectedNodeId: string | null
   editingNode: ThoughtNode | null
   isLoading: boolean
+  currentUserId: string | null
   addNode: (url: string, comment: string, options?: { useMCP?: boolean }) => Promise<void>
   updateNode: (updatedNode: ThoughtNode) => Promise<void>
   deleteNode: (nodeId: string) => Promise<void>
@@ -23,6 +25,8 @@ interface NodeStore {
   getDisplayNodes: () => ThoughtNode[]
   loadNodes: () => Promise<void>
   saveNodes: () => Promise<void>
+  setCurrentUserId: (userId: string | null) => void
+  loadUserNodes: (userId: string) => Promise<void>
 }
 
 const generateRandomPosition = (): [number, number, number] => {
@@ -44,6 +48,7 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
   selectedNodeId: null,
   editingNode: null,
   isLoading: false,
+  currentUserId: null,
 
   addNode: async (url: string, comment: string, options?: { useMCP?: boolean }) => {
     set({ isLoading: true })
@@ -119,7 +124,14 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
         })
         
         set({ nodes: [...nodes, newNode] })
-        await get().saveNodes()
+        
+        // Save to Supabase if user is logged in
+        const { currentUserId } = get()
+        if (currentUserId) {
+          await nodeDb.createNode(newNode, currentUserId)
+        } else {
+          await get().saveNodes()
+        }
         return
       }
       
@@ -180,7 +192,14 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
       })
       
       set({ nodes: [...nodes, newNode] })
-      await get().saveNodes()
+      
+      // Save to Supabase if user is logged in
+      const { currentUserId } = get()
+      if (currentUserId) {
+        await nodeDb.createNode(newNode, currentUserId)
+      } else {
+        await get().saveNodes()
+      }
       
     } catch (error) {
       console.error('Failed to add node:', error)
@@ -209,7 +228,7 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
   },
 
   updateNode: async (updatedNode: ThoughtNode) => {
-    const { nodes, editingNode, selectedNode } = get()
+    const { nodes, editingNode, selectedNode, currentUserId } = get()
     
     // Add lastUpdated timestamp to force re-render
     const nodeWithTimestamp = {
@@ -231,11 +250,17 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
     }
     
     set(newState)
-    await get().saveNodes()
+    
+    // Save to Supabase if user is logged in
+    if (currentUserId) {
+      await nodeDb.updateNode(updatedNode.id, updatedNode, currentUserId)
+    } else {
+      await get().saveNodes()
+    }
   },
 
   deleteNode: async (nodeId: string) => {
-    const { nodes, selectedNode, editingNode } = get()
+    const { nodes, selectedNode, editingNode, currentUserId } = get()
     
     // Remove node from array
     const updatedNodes = nodes.filter(node => node.id !== nodeId)
@@ -258,7 +283,13 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
     }
     
     set(newState)
-    await get().saveNodes()
+    
+    // Delete from Supabase if user is logged in
+    if (currentUserId) {
+      await nodeDb.deleteNode(nodeId, currentUserId)
+    } else {
+      await get().saveNodes()
+    }
   },
 
   loadNodes: async () => {
@@ -283,6 +314,20 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
       })
     } catch (error) {
       console.error('Failed to save nodes:', error)
+    }
+  },
+
+  setCurrentUserId: (userId) => set({ currentUserId: userId }),
+
+  loadUserNodes: async (userId: string) => {
+    set({ isLoading: true })
+    try {
+      const userNodes = await nodeDb.getNodes(userId)
+      set({ nodes: userNodes, currentUserId: userId })
+    } catch (error) {
+      console.error('Failed to load user nodes:', error)
+    } finally {
+      set({ isLoading: false })
     }
   },
 }))

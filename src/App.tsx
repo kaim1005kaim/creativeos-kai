@@ -32,8 +32,8 @@ function App() {
   const [user, setUser] = useState<{ id: string; email: string; name: string; picture: string } | null>(null)
 
   useEffect(() => {
-    // Initialize with mock data for demo
-    if (nodes.length === 0) {
+    // Initialize with mock data for demo if not logged in
+    if (nodes.length === 0 && !user) {
       useNodeStore.setState({ nodes: mockNodes })
     }
     
@@ -63,6 +63,20 @@ function App() {
       }
     }
   }, [])
+
+  // Load user nodes when user logs in
+  useEffect(() => {
+    if (user?.id) {
+      useNodeStore.getState().loadUserNodes(user.id)
+    } else {
+      // Clear user-specific data when logged out
+      useNodeStore.getState().setCurrentUserId(null)
+      // Load mock data for demo
+      if (nodes.length === 0) {
+        useNodeStore.setState({ nodes: mockNodes })
+      }
+    }
+  }, [user?.id])
 
   const handleClusterSelect = (cluster: Cluster | null) => {
     setSelectedCluster(cluster)
