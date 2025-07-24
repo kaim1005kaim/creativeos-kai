@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { NodeCanvas } from './components/NodeCanvas'
+import NodeCanvas from './components/NodeCanvas'
 import NodeList from './components/NodeList'
 import ModelSelector from './components/ModelSelector'
 import SearchBar from './components/SearchBar'
