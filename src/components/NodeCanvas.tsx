@@ -38,26 +38,26 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false }: Nod
   const outlineRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
   
-  // OZ-inspired colorful node colors (Summer Wars style)
+  // OZ-inspired colorful node colors (Summer Wars style) - excluding red tones to avoid confusion with border
   const ozColors = [
-    '#ff6b9d', // Pink
     '#4ecdc4', // Cyan
     '#45b7d1', // Blue
     '#96ceb4', // Green
     '#ffd93d', // Yellow
     '#ff9f43', // Orange
     '#a8e6cf', // Light green
-    '#ff8a80', // Light red
     '#82b1ff', // Light blue
     '#ce93d8', // Purple
     '#ffab40', // Amber
-    '#80cbc4'  // Teal
+    '#80cbc4', // Teal
+    '#b8e6b8', // Light mint
+    '#87ceeb'  // Sky blue
   ]
   
   // Assign color based on node ID for consistency
   const colorIndex = parseInt(node.id.slice(-2), 16) % ozColors.length
   const nodeColor = node.type === 'x-post' 
-    ? '#ff6b9d' // Special pink for X posts
+    ? '#4ecdc4' // Special cyan for X posts (instead of red)
     : ozColors[colorIndex]
   
   // Force re-render when node data changes
