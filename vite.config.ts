@@ -63,12 +63,7 @@ export default defineConfig({
           },
           {
             urlPattern: /\/api\/auth\//,
-            handler: 'NetworkOnly', // Never cache auth endpoints
-            options: {
-              cacheKeyWillBeUsed: async () => {
-                return `auth-${Date.now()}` // Force unique cache keys
-              }
-            }
+            handler: 'NetworkOnly' // Never cache auth endpoints
           }
         ],
         navigateFallback: null, // Disable navigation fallback for auth routes
