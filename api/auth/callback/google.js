@@ -6,6 +6,11 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.replace(/[\r\
 const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export default async function handler(req, res) {
+  console.log('🚀 OAuth callback function started')
+  console.log('Request method:', req.method)
+  console.log('Request URL:', req.url)
+  console.log('Request query:', req.query)
+  
   const { code } = req.query
 
   console.log('OAuth callback called with code:', code ? 'present' : 'missing')
@@ -122,7 +127,9 @@ export default async function handler(req, res) {
     }
 
     // Redirect to home with session data
-    res.redirect(`https://creativeos-kai.vercel.app/?session=${encodeURIComponent(JSON.stringify(sessionData))}`)
+    const redirectUrl = `https://creativeos-kai.vercel.app/?session=${encodeURIComponent(JSON.stringify(sessionData))}`
+    console.log('🔄 Redirecting to:', redirectUrl.substring(0, 100) + '...')
+    res.redirect(redirectUrl)
   } catch (error) {
     console.error('OAuth error:', error)
     console.error('Error stack:', error.stack)
