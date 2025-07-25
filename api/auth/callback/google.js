@@ -142,7 +142,26 @@ export default async function handler(req, res) {
     
     console.log('🔄 Redirect URL length:', redirectUrl.length)
     console.log('🔄 Redirecting to:', redirectUrl.substring(0, 120) + '...')
-    res.redirect(redirectUrl)
+    
+    // Use HTML redirect as fallback if res.redirect fails
+    res.setHeader('Content-Type', 'text/html')
+    res.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Redirecting...</title>
+          <meta http-equiv="refresh" content="0;url=${redirectUrl}">
+        </head>
+        <body>
+          <p>Redirecting to CreativeOS...</p>
+          <script>
+            console.log('🔄 Client-side redirect to:', '${redirectUrl.substring(0, 100)}...');
+            window.location.href = '${redirectUrl}';
+          </script>
+        </body>
+      </html>
+    `)
   } catch (error) {
     console.error('OAuth error:', error)
     console.error('Error stack:', error.stack)
