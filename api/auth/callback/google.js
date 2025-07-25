@@ -155,6 +155,12 @@ export default async function handler(req, res) {
     console.log('🔄 Redirect URL length:', redirectUrl.length)
     console.log('🔄 Redirecting to:', redirectUrl.substring(0, 120) + '...')
     
+    // Set anti-cache headers to prevent caching of auth responses
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    res.setHeader('Pragma', 'no-cache')
+    res.setHeader('Expires', '0')
+    res.setHeader('Surrogate-Control', 'no-store')
+    
     // Use HTML redirect as fallback if res.redirect fails
     res.setHeader('Content-Type', 'text/html')
     res.status(200).send(`

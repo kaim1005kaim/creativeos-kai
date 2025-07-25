@@ -60,8 +60,23 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24
               }
             }
+          },
+          {
+            urlPattern: /\/api\/auth\//,
+            handler: 'NetworkOnly', // Never cache auth endpoints
+            options: {
+              cacheKeyWillBeUsed: async () => {
+                return `auth-${Date.now()}` // Force unique cache keys
+              }
+            }
           }
-        ]
+        ],
+        navigateFallback: null, // Disable navigation fallback for auth routes
+        skipWaiting: true,
+        clientsClaim: true
+      },
+      devOptions: {
+        enabled: false // Disable PWA in development
       }
     })
   ],

@@ -20,13 +20,33 @@ export function enhanceNetworkConnectivity(nodes: ThoughtNode[]): ThoughtNode[] 
       }
     }
     
-    // Find missing strong connections
-    const potentialConnections = similarities
-      .filter(s => s.similarity > 0.25) // Lower threshold for enhancement
+    // Find missing connections with much more aggressive approach
+    const strongConnections = similarities
+      .filter(s => s.similarity > 0.1) // Very low threshold
       .filter(s => !currentNode.linkedNodeIds.includes(s.nodeId))
       .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 2) // Add up to 2 missing connections
+      .slice(0, 3) // Add up to 3 strong connections
       .map(s => s.nodeId)
+    
+    // Also add weaker connections to ensure connectivity
+    const weakConnections = similarities
+      .filter(s => s.similarity > 0.05 && s.similarity <= 0.1) // Even weaker connections
+      .filter(s => !currentNode.linkedNodeIds.includes(s.nodeId))
+      .filter(s => !strongConnections.includes(s.nodeId))
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, 2) // Add up to 2 weak connections
+      .map(s => s.nodeId)
+    
+    const potentialConnections = [...strongConnections, ...weakConnections]
+    
+    // Fallback: if still no connections, force connect to top similarity nodes
+    if (potentialConnections.length === 0 && currentNode.linkedNodeIds.length === 0) {
+      const forceConnections = similarities
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 2) // Force at least 2 connections
+        .map(s => s.nodeId)
+      potentialConnections.push(...forceConnections)
+    }
     
     // Add missing connections
     currentNode.linkedNodeIds.push(...potentialConnections)
@@ -66,11 +86,11 @@ export function addCategoryConnections(nodes: ThoughtNode[]): ThoughtNode[] {
   Object.values(categoryGroups).forEach(categoryNodes => {
     if (categoryNodes.length > 1) {
       categoryNodes.forEach(node => {
-        // Connect to at least one other node in same category
+        // Connect to all other nodes in same category (for small groups)
         const sameCategory = categoryNodes
           .filter(n => n.id !== node.id)
           .filter(n => !node.linkedNodeIds.includes(n.id))
-          .slice(0, 1) // Add one category connection
+          .slice(0, categoryNodes.length <= 4 ? categoryNodes.length - 1 : 3) // Connect more aggressively
         
         sameCategory.forEach(targetNode => {
           node.linkedNodeIds.push(targetNode.id)
