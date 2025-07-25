@@ -30,10 +30,13 @@ export default function NodeEditModal({ node, isOpen, onClose }: NodeEditModalPr
       .map(tag => tag.trim())
       .filter(tag => tag.length > 0)
 
-    updateNode(node.id, {
+    const updatedNode = {
+      ...node,
       comment,
       tags: tagArray
-    })
+    }
+
+    updateNode(updatedNode)
     onClose()
   }
 
