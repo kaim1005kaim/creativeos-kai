@@ -25,6 +25,7 @@ import { useTheme } from './contexts/ThemeContext'
 import { Cluster } from './lib/clustering'
 import { Cluster as AdvancedCluster } from './lib/advancedClustering'
 import './App.css'
+import { hideSplashScreen, handleAppUrl, isNative } from './lib/capacitor'
 
 function App() {
   const { nodes, setFilteredNodes, selectedNodeId, setSelectedNodeId } = useNodeStore()
@@ -46,25 +47,40 @@ function App() {
     // Check for session info in URL (temporary auth handling)
     const urlParams = new URLSearchParams(window.location.search)
     const sessionParam = urlParams.get('session')
+    
+    console.log('🔍 Auth Debug:', {
+      currentUrl: window.location.href,
+      hasSessionParam: !!sessionParam,
+      sessionParamLength: sessionParam?.length || 0,
+      allParams: Object.fromEntries(urlParams.entries())
+    })
+    
     if (sessionParam) {
       try {
+        console.log('📝 Raw session param:', sessionParam.substring(0, 100) + '...')
         const sessionData = JSON.parse(decodeURIComponent(sessionParam))
+        console.log('✅ Parsed session data:', sessionData)
         setUser(sessionData)
         // Store in localStorage for persistence
         localStorage.setItem('creativeos_user', JSON.stringify(sessionData))
         // Clean URL
         window.history.replaceState({}, document.title, window.location.pathname)
+        console.log('💾 Session stored and URL cleaned')
       } catch (e) {
-        console.error('Failed to parse session data:', e)
+        console.error('❌ Failed to parse session data:', e)
+        console.error('Raw session param:', sessionParam)
       }
     } else {
       // Check localStorage for existing session
       const storedUser = localStorage.getItem('creativeos_user')
+      console.log('🗄️ Checking localStorage:', !!storedUser)
       if (storedUser) {
         try {
-          setUser(JSON.parse(storedUser))
+          const userData = JSON.parse(storedUser)
+          console.log('✅ Restored user from localStorage:', userData)
+          setUser(userData)
         } catch (e) {
-          console.error('Failed to parse stored user:', e)
+          console.error('❌ Failed to parse stored user:', e)
         }
       }
     }
@@ -76,6 +92,38 @@ function App() {
     
     checkIsMobile()
     window.addEventListener('resize', checkIsMobile)
+    
+    // Hide splash screen for native apps
+    if (isNative) {
+      hideSplashScreen()
+    }
+    
+    // Handle deep links for native apps
+    handleAppUrl((data) => {
+      if (data.url) {
+        // Check if it's a deep link URL
+        if (data.url.startsWith('creativeos://')) {
+          const deepUrl = new URL(data.url)
+          const sharedUrl = deepUrl.searchParams.get('url')
+          if (sharedUrl) {
+            window.location.search = `?url=${encodeURIComponent(sharedUrl)}`
+          }
+        } else {
+          // Direct URL shared from another app
+          window.location.search = `?url=${encodeURIComponent(data.url)}`
+        }
+      } else if (data.text) {
+        // Plain text shared (might contain URL)
+        window.location.search = `?text=${encodeURIComponent(data.text)}`
+      }
+      
+      // Add comment if provided
+      if (data.comment) {
+        const currentSearch = new URLSearchParams(window.location.search)
+        currentSearch.set('comment', data.comment)
+        window.location.search = currentSearch.toString()
+      }
+    })
     
     return () => window.removeEventListener('resize', checkIsMobile)
   }, [])

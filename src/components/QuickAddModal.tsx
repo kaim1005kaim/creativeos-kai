@@ -25,12 +25,14 @@ export default function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
   // Handle paste from clipboard
   useEffect(() => {
     if (isOpen) {
-      navigator.clipboard.readText().then(text => {
-        if (text && (text.startsWith('http') || text.includes('.'))) {
-          setUrl(text)
-        }
-      }).catch(() => {
-        // Clipboard access failed, ignore
+      import('../lib/capacitor').then(({ pasteFromClipboard }) => {
+        pasteFromClipboard().then(text => {
+          if (text && (text.startsWith('http') || text.includes('.'))) {
+            setUrl(text)
+          }
+        }).catch(() => {
+          // Clipboard access failed, ignore
+        })
       })
     }
   }, [isOpen])
@@ -55,10 +57,12 @@ export default function QuickAddModal({ isOpen, onClose }: QuickAddModalProps) {
 
   const handlePasteAndAdd = async () => {
     try {
-      const text = await navigator.clipboard.readText()
+      const { pasteFromClipboard, hapticFeedback } = await import('../lib/capacitor')
+      const text = await pasteFromClipboard()
       if (text && (text.startsWith('http') || text.includes('.'))) {
         setUrl(text)
         setComment('Pasted from clipboard')
+        await hapticFeedback('light')
         // Auto-submit if it's a URL
         setTimeout(() => {
           handleSubmit({ preventDefault: () => {} } as React.FormEvent)
