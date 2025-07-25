@@ -1,0 +1,29 @@
+
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="128" fill="#0a0a0a"/>
+  
+  <!-- OZ-style hexagon pattern -->
+  <g opacity="0.3">
+    <path d="M128 64 L192 96 L192 160 L128 192 L64 160 L64 96 Z" fill="#4ecdc4" stroke="#4ecdc4" stroke-width="2"/>
+    <path d="M320 64 L384 96 L384 160 L320 192 L256 160 L256 96 Z" fill="#ff9f43" stroke="#ff9f43" stroke-width="2"/>
+    <path d="M224 192 L288 224 L288 288 L224 320 L160 288 L160 224 Z" fill="#45b7d1" stroke="#45b7d1" stroke-width="2"/>
+  </g>
+  
+  <!-- Central node cluster -->
+  <circle cx="256" cy="256" r="80" fill="#4ecdc4" opacity="0.9"/>
+  <circle cx="256" cy="256" r="60" fill="#0a0a0a"/>
+  
+  <!-- Connection lines -->
+  <line x1="256" y1="256" x2="128" y2="128" stroke="#4ecdc4" stroke-width="3" opacity="0.6"/>
+  <line x1="256" y1="256" x2="384" y2="128" stroke="#ff9f43" stroke-width="3" opacity="0.6"/>
+  <line x1="256" y1="256" x2="256" y2="384" stroke="#45b7d1" stroke-width="3" opacity="0.6"/>
+  
+  <!-- Small nodes -->
+  <circle cx="128" cy="128" r="24" fill="#4ecdc4"/>
+  <circle cx="384" cy="128" r="24" fill="#ff9f43"/>
+  <circle cx="256" cy="384" r="24" fill="#45b7d1"/>
+  
+  <!-- Center symbol -->
+  <text x="256" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" font-weight="bold" fill="#4ecdc4">C</text>
+</svg>

@@ -18,6 +18,7 @@ import ThemeToggle from './components/ThemeToggle'
 import GoogleLoginButton from './components/GoogleLoginButton'
 import FloatingActionButton from './components/FloatingActionButton'
 import MobileMenu from './components/MobileMenu'
+import PWAInstallPrompt from './components/PWAInstallPrompt'
 import { useNodeStore } from './store/nodes'
 import { useMockData } from './lib/mockApi'
 import { useTheme } from './contexts/ThemeContext'
@@ -569,13 +570,14 @@ function App() {
         {/* Mobile FAB and Menu */}
         {isMobile && (
           <>
-            <FloatingActionButton onClick={() => setIsMobileMenuOpen(true)} />
+            <FloatingActionButton onMenuToggle={() => setIsMobileMenuOpen(true)} />
             <MobileMenu 
               isOpen={isMobileMenuOpen}
               onClose={() => setIsMobileMenuOpen(false)}
               user={user}
               onLogout={handleLogout}
             />
+            <PWAInstallPrompt />
           </>
         )}
       </main>
