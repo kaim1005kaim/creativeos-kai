@@ -60,14 +60,21 @@ export default async function handler(req, res) {
     console.log('Google user info:', { email: googleUser.email, name: googleUser.name })
 
     // Upsert user in Supabase
-    const { data: existingUser } = await supabase
+    console.log('Checking for existing user in Supabase...')
+    const { data: existingUser, error: selectError } = await supabase
       .from('users')
       .select('*')
       .eq('email', googleUser.email)
       .single()
 
+    if (selectError && selectError.code !== 'PGRST116') {
+      console.error('Supabase select error:', selectError)
+      throw new Error(`Database query failed: ${selectError.message}`)
+    }
+
     let user
     if (existingUser) {
+      console.log('Updating existing user...')
       // Update existing user
       const { data, error } = await supabase
         .from('users')
@@ -80,9 +87,13 @@ export default async function handler(req, res) {
         .select()
         .single()
       
-      if (error) throw error
+      if (error) {
+        console.error('Supabase update error:', error)
+        throw new Error(`User update failed: ${error.message}`)
+      }
       user = data
     } else {
+      console.log('Creating new user...')
       // Create new user
       const { data, error } = await supabase
         .from('users')
@@ -95,7 +106,10 @@ export default async function handler(req, res) {
         .select()
         .single()
       
-      if (error) throw error
+      if (error) {
+        console.error('Supabase insert error:', error)
+        throw new Error(`User creation failed: ${error.message}`)
+      }
       user = data
     }
 
@@ -111,6 +125,13 @@ export default async function handler(req, res) {
     res.redirect(`https://creativeos-kai.vercel.app/?session=${encodeURIComponent(JSON.stringify(sessionData))}`)
   } catch (error) {
     console.error('OAuth error:', error)
-    res.status(500).json({ error: error.message || 'Internal server error' })
+    console.error('Error stack:', error.stack)
+    
+    // Return detailed error info for debugging
+    res.status(500).json({ 
+      error: error.message || 'Internal server error',
+      details: error.stack,
+      step: 'OAuth processing failed'
+    })
   }
 }
