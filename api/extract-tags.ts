@@ -11,7 +11,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { text, url, modelId = 'deepseek-r1' } = req.body;
 
   try {
-    const prompt = `以下のコンテンツを分析して、適切なタグとカテゴリを抽出してください。
+    const prompt = `以下のコンテンツを分析して、階層的で統合的なタグとカテゴリを抽出してください。
 
 コンテンツ:
 "${text}"
@@ -20,17 +20,24 @@ URL: ${url}
 
 以下の形式でJSONを返してください：
 {
-  "category": "主要カテゴリ（技術、ビジネス、学習、エンタメ、ライフスタイル、ニュース、その他から選択）",
-  "tags": ["タグ1", "タグ2", "タグ3", "タグ4", "タグ5"],
-  "keywords": ["キーワード1", "キーワード2", "キーワード3"]
+  "category": "主要カテゴリ（AI/機械学習、フロントエンド、バックエンド、デザイン、映像制作、ゲーム開発、データサイエンス、インフラ、モバイル、その他から選択）",
+  "tags": ["統合タグ1", "統合タグ2", "統合タグ3"],
+  "keywords": ["具体的キーワード1", "具体的キーワード2"]
 }
 
-注意：
-- タグは3-5個、簡潔で検索しやすいものを選択
-- カテゴリは必ず指定した中から選択
-- キーワードは重要な概念や用語を抽出
-- 日本語と英語を混在させても構いません
-- JSONフォーマット以外は出力しないでください`;
+タグ抽出ルール：
+1. 具体的なツール名は避け、技術分野で統合する
+   例: "After Effects, Premiere" → "映像編集"
+   例: "React, Vue, Angular" → "フロントエンド"
+   例: "TensorFlow, PyTorch" → "機械学習"
+
+2. 階層を意識して上位概念を使用
+   例: "VFX, モーション, 3DCG" → "映像制作"
+   例: "UI, UX, デザインシステム" → "デザイン"
+
+3. タグは2-3個に絞り、関連性の高いノード同士が繋がるように
+4. 同じ技術領域は必ず共通タグを持つようにする
+5. JSONフォーマット以外は出力しないでください`;
 
     const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
       model: 'deepseek-chat',

@@ -104,18 +104,18 @@ function generateNaturalPosition(index: number, total: number): [number, number,
   return [x, y, z]
 }
 
-// Create nodes with natural positions and sub-categories for better similarity
+// Create nodes with natural positions and unified tags for better connectivity
 const nodeData = [
-  { id: "sample-01", url: "https://github.com/anthropics/claude-code", comment: "Claude Code - AI-powered coding assistant", title: "Claude Code", summary: "GitHubで公開されているClaude Codeは、AI支援によるコーディングツールです。開発者の生産性向上を目的として設計されています。", category: 'ai' as const, subCategory: undefined, links: ["sample-05"] },
-  { id: "sample-05", url: "https://react.dev", comment: "React - ユーザーインターフェース構築のためのライブラリ", title: "React", summary: "Reactは、Facebookが開発したJavaScriptライブラリで、ユーザーインターフェースの構築に特化しています。コンポーネントベースの設計により、再利用可能で保守しやすいコードを書くことができます。", category: 'frontend' as const, subCategory: 'react', links: ["sample-01"] },
-  { id: "sample-02", url: "https://nextjs.org", comment: "Next.js - React フレームワーク", title: "Next.js", summary: "Next.jsは、本番環境対応のReactフレームワークで、SSR、SSG、APIルートなどの機能を提供します。", category: 'frontend' as const, subCategory: 'framework', links: ["sample-01", "sample-05"] },
-  { id: "sample-03", url: "https://www.typescriptlang.org", comment: "TypeScript - 型安全なJavaScript", title: "TypeScript", summary: "TypeScriptは、Microsoftが開発したJavaScriptに静的型定義を追加したプログラミング言語です。", category: 'frontend' as const, subCategory: 'types', links: ["sample-05", "sample-02"] },
-  { id: "sample-06", url: "https://tailwindcss.com", comment: "Tailwind CSS - ユーティリティファーストCSSフレームワーク", title: "Tailwind CSS", summary: "Tailwind CSSは、高度にカスタマイズ可能な低レベルCSSフレームワークです。", category: 'frontend' as const, subCategory: 'styling', links: ["sample-02"] },
-  { id: "sample-0a", url: "https://threejs.org", comment: "Three.js - JavaScript 3Dライブラリ", title: "Three.js", summary: "Three.jsは、WebGLを使用してブラウザで3Dグラフィックスを作成するためのJavaScriptライブラリです。", category: 'frontend' as const, subCategory: '3d', links: ["sample-09"] },
-  { id: "sample-09", url: "https://vitejs.dev", comment: "Vite - 高速なフロントエンドビルドツール", title: "Vite", summary: "Viteは、現代的なフロントエンド開発のための高速なビルドツールです。ESモジュールを活用し、開発時の高速なHMRと本番環境での最適化を実現しています。", category: 'build' as const, subCategory: undefined, links: ["sample-05"] },
-  { id: "sample-07", url: "https://nodejs.org", comment: "Node.js - JavaScript実行環境", title: "Node.js", summary: "Node.jsは、Chrome V8 JavaScriptエンジンで動作するJavaScript実行環境です。", category: 'backend' as const, subCategory: undefined, links: ["sample-03", "sample-02"] },
-  { id: "sample-0b", url: "https://vercel.com", comment: "Vercel - フロントエンドデプロイプラットフォーム", title: "Vercel", summary: "Vercelは、静的サイトやサーバーレス関数のホスティングに特化したクラウドプラットフォームです。", category: 'cloud' as const, subCategory: undefined, links: ["sample-02", "sample-07"] },
-  { id: "sample-04", url: "https://www.figma.com", comment: "Figma - デザインコラボレーションツール", title: "Figma", summary: "Figmaは、ブラウザベースのUIデザインツールで、リアルタイムコラボレーション機能を提供します。", category: 'design' as const, subCategory: undefined, links: ["sample-06", "sample-0b"] }
+  { id: "sample-01", url: "https://github.com/anthropics/claude-code", comment: "Claude Code - AI-powered coding assistant", title: "Claude Code", summary: "GitHubで公開されているClaude Codeは、AI支援によるコーディングツールです。開発者の生産性向上を目的として設計されています。", category: 'AI/機械学習' as const, tags: ['AI', '開発支援'], subCategory: undefined, links: ["sample-05"] },
+  { id: "sample-05", url: "https://react.dev", comment: "React - ユーザーインターフェース構築のためのライブラリ", title: "React", summary: "Reactは、Facebookが開発したJavaScriptライブラリで、ユーザーインターフェースの構築に特化しています。コンポーネントベースの設計により、再利用可能で保守しやすいコードを書くことができます。", category: 'フロントエンド' as const, tags: ['フロントエンド', 'JavaScript'], subCategory: 'react', links: ["sample-01"] },
+  { id: "sample-02", url: "https://nextjs.org", comment: "Next.js - React フレームワーク", title: "Next.js", summary: "Next.jsは、本番環境対応のReactフレームワークで、SSR、SSG、APIルートなどの機能を提供します。", category: 'フロントエンド' as const, tags: ['フロントエンド', 'JavaScript'], subCategory: 'framework', links: ["sample-01", "sample-05"] },
+  { id: "sample-03", url: "https://www.typescriptlang.org", comment: "TypeScript - 型安全なJavaScript", title: "TypeScript", summary: "TypeScriptは、Microsoftが開発したJavaScriptに静的型定義を追加したプログラミング言語です。", category: 'フロントエンド' as const, tags: ['フロントエンド', 'JavaScript'], subCategory: 'types', links: ["sample-05", "sample-02"] },
+  { id: "sample-06", url: "https://tailwindcss.com", comment: "Tailwind CSS - ユーティリティファーストCSSフレームワーク", title: "Tailwind CSS", summary: "Tailwind CSSは、高度にカスタマイズ可能な低レベルCSSフレームワークです。", category: 'デザイン' as const, tags: ['デザイン', 'CSS'], subCategory: 'styling', links: ["sample-02"] },
+  { id: "sample-0a", url: "https://threejs.org", comment: "Three.js - JavaScript 3Dライブラリ", title: "Three.js", summary: "Three.jsは、WebGLを使用してブラウザで3Dグラフィックスを作成するためのJavaScriptライブラリです。", category: 'フロントエンド' as const, tags: ['フロントエンド', '3DCG'], subCategory: '3d', links: ["sample-09"] },
+  { id: "sample-09", url: "https://vitejs.dev", comment: "Vite - 高速なフロントエンドビルドツール", title: "Vite", summary: "Viteは、現代的なフロントエンド開発のための高速なビルドツールです。ESモジュールを活用し、開発時の高速なHMRと本番環境での最適化を実現しています。", category: 'インフラ' as const, tags: ['ビルドツール', 'フロントエンド'], subCategory: undefined, links: ["sample-05"] },
+  { id: "sample-07", url: "https://nodejs.org", comment: "Node.js - JavaScript実行環境", title: "Node.js", summary: "Node.jsは、Chrome V8 JavaScriptエンジンで動作するJavaScript実行環境です。", category: 'バックエンド' as const, tags: ['バックエンド', 'JavaScript'], subCategory: undefined, links: ["sample-03", "sample-02"] },
+  { id: "sample-0b", url: "https://vercel.com", comment: "Vercel - フロントエンドデプロイプラットフォーム", title: "Vercel", summary: "Vercelは、静的サイトやサーバーレス関数のホスティングに特化したクラウドプラットフォームです。", category: 'インフラ' as const, tags: ['クラウド', 'デプロイ'], subCategory: undefined, links: ["sample-02", "sample-07"] },
+  { id: "sample-04", url: "https://www.figma.com", comment: "Figma - デザインコラボレーションツール", title: "Figma", summary: "Figmaは、ブラウザベースのUIデザインツールで、リアルタイムコラボレーション機能を提供します。", category: 'デザイン' as const, tags: ['デザイン', 'UI/UX'], subCategory: undefined, links: ["sample-06", "sample-0b"] }
 ]
 
 // Mock data for demo purposes
@@ -126,10 +126,17 @@ const MOCK_NODES: ThoughtNode[] = nodeData.map((data, index) => ({
   comment: data.comment,
   title: data.title,
   summary: data.summary,
-  embedding: generateTechEmbedding(data.category, data.subCategory),
+  embedding: generateTechEmbedding(data.category === 'AI/機械学習' ? 'ai' : 
+                                  data.category === 'フロントエンド' ? 'frontend' :
+                                  data.category === 'バックエンド' ? 'backend' :
+                                  data.category === 'デザイン' ? 'design' :
+                                  data.category === 'インフラ' ? 'cloud' : 'frontend', 
+                                  data.subCategory),
   createdAt: Date.now() - (86400000 - index * 7200000),
   position: generateNaturalPosition(index, nodeData.length),
-  linkedNodeIds: data.links
+  linkedNodeIds: data.links,
+  tags: data.tags,
+  category: data.category
 }))
 
 export function useMockData(): ThoughtNode[] {

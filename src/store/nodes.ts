@@ -110,13 +110,21 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
           similarity: calculateSimilarity(embedding, node.embedding),
         }))
         
+        // Multi-level connections for better network topology
         const strongConnections = similarities
-          .filter((s) => s.similarity > 0.7)
+          .filter((s) => s.similarity > 0.6)
           .map((s) => s.nodeId)
         
-        newNode.linkedNodeIds = strongConnections
+        const mediumConnections = similarities
+          .filter((s) => s.similarity > 0.4 && s.similarity <= 0.6)
+          .slice(0, 2) // Limit medium connections to avoid clutter
+          .map((s) => s.nodeId)
         
-        strongConnections.forEach((nodeId) => {
+        const allConnections = [...strongConnections, ...mediumConnections]
+        
+        newNode.linkedNodeIds = allConnections
+        
+        allConnections.forEach((nodeId) => {
           const existingNode = nodes.find((n) => n.id === nodeId)
           if (existingNode && !existingNode.linkedNodeIds.includes(newNode.id)) {
             existingNode.linkedNodeIds.push(newNode.id)
@@ -178,13 +186,21 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
         similarity: calculateSimilarity(embedding, node.embedding),
       }))
       
+      // Multi-level connections for better network topology
       const strongConnections = similarities
-        .filter((s) => s.similarity > 0.7)
+        .filter((s) => s.similarity > 0.6)
         .map((s) => s.nodeId)
       
-      newNode.linkedNodeIds = strongConnections
+      const mediumConnections = similarities
+        .filter((s) => s.similarity > 0.4 && s.similarity <= 0.6)
+        .slice(0, 2) // Limit medium connections to avoid clutter
+        .map((s) => s.nodeId)
       
-      strongConnections.forEach((nodeId) => {
+      const allConnections = [...strongConnections, ...mediumConnections]
+      
+      newNode.linkedNodeIds = allConnections
+      
+      allConnections.forEach((nodeId) => {
         const existingNode = nodes.find((n) => n.id === nodeId)
         if (existingNode && !existingNode.linkedNodeIds.includes(newNode.id)) {
           existingNode.linkedNodeIds.push(newNode.id)
