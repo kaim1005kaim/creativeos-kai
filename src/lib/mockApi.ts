@@ -1,4 +1,5 @@
 import { ThoughtNode } from '../types/ThoughtNode'
+import { enhanceNetworkConnectivity, addCategoryConnections } from './networkEnhancer'
 
 // Generate realistic embedding vectors for tech categories with better similarity control
 function generateTechEmbedding(category: 'ai' | 'frontend' | 'backend' | 'build' | 'design' | 'cloud', subCategory?: string): number[] {
@@ -140,5 +141,8 @@ const MOCK_NODES: ThoughtNode[] = nodeData.map((data, index) => ({
 }))
 
 export function useMockData(): ThoughtNode[] {
-  return MOCK_NODES
+  // First apply category-based connections, then enhance overall connectivity
+  const categoryEnhanced = addCategoryConnections(MOCK_NODES)
+  const fullyEnhanced = enhanceNetworkConnectivity(categoryEnhanced)
+  return fullyEnhanced
 }

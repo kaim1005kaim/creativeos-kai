@@ -110,17 +110,24 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
           similarity: calculateSimilarity(embedding, node.embedding),
         }))
         
-        // Multi-level connections for better network topology
+        // More aggressive connection strategy for rich network
         const strongConnections = similarities
-          .filter((s) => s.similarity > 0.6)
+          .filter((s) => s.similarity > 0.3)
+          .slice(0, 3) // Top 3 most similar
           .map((s) => s.nodeId)
         
         const mediumConnections = similarities
-          .filter((s) => s.similarity > 0.4 && s.similarity <= 0.6)
-          .slice(0, 2) // Limit medium connections to avoid clutter
+          .filter((s) => s.similarity > 0.15 && s.similarity <= 0.3)
+          .slice(0, 2) // Additional weak connections
           .map((s) => s.nodeId)
         
-        const allConnections = [...strongConnections, ...mediumConnections]
+        // Force minimum connections if too few
+        const minConnections = similarities
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, Math.max(1, strongConnections.length + mediumConnections.length))
+          .map((s) => s.nodeId)
+        
+        const allConnections = [...new Set([...strongConnections, ...mediumConnections, ...minConnections])]
         
         newNode.linkedNodeIds = allConnections
         
@@ -186,17 +193,24 @@ export const useNodeStore = create<NodeStore>((set, get) => ({
         similarity: calculateSimilarity(embedding, node.embedding),
       }))
       
-      // Multi-level connections for better network topology
+      // More aggressive connection strategy for rich network
       const strongConnections = similarities
-        .filter((s) => s.similarity > 0.6)
+        .filter((s) => s.similarity > 0.3)
+        .slice(0, 3) // Top 3 most similar
         .map((s) => s.nodeId)
       
       const mediumConnections = similarities
-        .filter((s) => s.similarity > 0.4 && s.similarity <= 0.6)
-        .slice(0, 2) // Limit medium connections to avoid clutter
+        .filter((s) => s.similarity > 0.15 && s.similarity <= 0.3)
+        .slice(0, 2) // Additional weak connections
         .map((s) => s.nodeId)
       
-      const allConnections = [...strongConnections, ...mediumConnections]
+      // Force minimum connections if too few
+      const minConnections = similarities
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, Math.max(1, strongConnections.length + mediumConnections.length))
+        .map((s) => s.nodeId)
+      
+      const allConnections = [...new Set([...strongConnections, ...mediumConnections, ...minConnections])]
       
       newNode.linkedNodeIds = allConnections
       

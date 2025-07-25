@@ -26,6 +26,7 @@ import { Cluster } from './lib/clustering'
 import { Cluster as AdvancedCluster } from './lib/advancedClustering'
 import './App.css'
 import { hideSplashScreen, handleAppUrl, isNative } from './lib/capacitor'
+import { enhanceNetworkConnectivity } from './lib/networkEnhancer'
 
 function App() {
   const { nodes, setFilteredNodes, selectedNodeId, setSelectedNodeId } = useNodeStore()
@@ -239,6 +240,16 @@ function App() {
       }
     }
   }, [user?.id])
+
+  // Enhance connectivity when nodes change
+  useEffect(() => {
+    if (nodes.length > 1) {
+      const enhanced = enhanceNetworkConnectivity(nodes)
+      if (JSON.stringify(enhanced) !== JSON.stringify(nodes)) {
+        useNodeStore.setState({ nodes: enhanced })
+      }
+    }
+  }, [nodes.length]) // Only trigger when node count changes
 
   const handleClusterSelect = (cluster: Cluster | null) => {
     setSelectedCluster(cluster)
