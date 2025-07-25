@@ -303,10 +303,13 @@ export default function NodeCanvas() {
     const displayNodes = getDisplayNodes()
     if (useForceLayout && displayNodes.length > 1) {
       const newLayoutedNodes = calculateForceLayout(displayNodes, {
-        iterations: 30,
-        repulsionStrength: 150,
-        attractionStrength: 0.08,
-        similarityThreshold: 0.4
+        iterations: 50,
+        repulsionStrength: 50,
+        attractionStrength: 0.05,
+        similarityThreshold: 0.3,
+        centeringForce: 0.02,
+        maxDistance: 15,
+        minDistance: 3
       })
       setLayoutedNodes(newLayoutedNodes)
     } else {
