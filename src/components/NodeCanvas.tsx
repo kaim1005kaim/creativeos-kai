@@ -122,10 +122,12 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
         ref={outlineRef}
         onClick={(event) => onClick(node, event)}
         onContextMenu={(event) => {
+          console.log('Context menu triggered:', node.title, event)
           event.stopPropagation()
           onContextMenu(node, event)
         }}
         onPointerOver={(event) => {
+          console.log('Node hover outline:', node.title, event)
           setHovered(true)
           if (onHover) onHover(node, event)
         }}
@@ -147,10 +149,12 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
         ref={meshRef}
         onClick={(event) => onClick(node, event)}
         onContextMenu={(event) => {
+          console.log('Main sphere context menu:', node.title, event)
           event.stopPropagation()
           onContextMenu(node, event)
         }}
         onPointerOver={(event) => {
+          console.log('Main sphere hover:', node.title, event)
           setHovered(true)
           if (onHover) onHover(node, event)
         }}
@@ -390,10 +394,18 @@ export default function NodeCanvas() {
     setSelectedNode(latestNode)
     setSelectedNodeId(node.id)
     
-    // Get mouse position for context menu
+    // Get mouse position for context menu from R3F event
     const rect = document.querySelector('canvas')?.getBoundingClientRect()
-    const x = event?.clientX || (rect ? rect.left + 100 : 100)
-    const y = event?.clientY || (rect ? rect.top + 100 : 100)
+    let x, y
+    
+    if (event?.nativeEvent) {
+      x = event.nativeEvent.clientX
+      y = event.nativeEvent.clientY
+    } else {
+      // Fallback position
+      x = (rect ? rect.left + 100 : 100)
+      y = (rect ? rect.top + 100 : 100)
+    }
     
     setContextMenu({
       node: latestNode,
@@ -418,10 +430,10 @@ export default function NodeCanvas() {
   }
 
   const handleNodeHover = (node: ThoughtNode, event?: any) => {
-    if (event) {
+    if (event?.nativeEvent) {
       const rect = document.querySelector('canvas')?.getBoundingClientRect()
-      const x = event.clientX - (rect?.left || 0)
-      const y = event.clientY - (rect?.top || 0)
+      const x = event.nativeEvent.clientX - (rect?.left || 0)
+      const y = event.nativeEvent.clientY - (rect?.top || 0)
       
       setTooltip({
         node,
