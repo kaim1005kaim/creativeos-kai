@@ -228,25 +228,10 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
       {/* 3D Space Tooltip - Fade in on hover */}
       {hovered && (
         <group position={[0.8, 0, 0]}>
-          {/* Title */}
-          <Text
-            position={[0, 0.3, 0]}
-            fontSize={0.12}
-            color="#2d3748"
-            anchorX="left"
-            anchorY="middle"
-            outlineWidth={0.01}
-            outlineColor="#ffffff"
-            fillOpacity={0.95}
-            fontWeight="bold"
-          >
-            {node.title || 'No Title'}
-          </Text>
-          
           {/* Comment */}
           {node.comment && (
             <Text
-              position={[0, 0.1, 0]}
+              position={[0, 0.2, 0]}
               fontSize={0.08}
               color="#4a5568"
               anchorX="left"
@@ -263,7 +248,7 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
           {/* Summary */}
           {node.summary && (
             <Text
-              position={[0, -0.1, 0]}
+              position={[0, 0, 0]}
               fontSize={0.06}
               color="#718096"
               anchorX="left"
@@ -281,7 +266,7 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
           {/* Tags in 3D space */}
           {node.tags && node.tags.length > 0 && (
             <Text
-              position={[0, -0.3, 0]}
+              position={[0, -0.2, 0]}
               fontSize={0.05}
               color="#4ecdc4"
               anchorX="left"
