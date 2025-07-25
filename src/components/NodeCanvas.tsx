@@ -4,7 +4,7 @@ import { OrbitControls, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { useNodeStore } from '../store/nodes'
 import { ThoughtNode } from '../types/ThoughtNode'
-// Note: NodeEditModal removed during cleanup
+import NodeEditModal from './NodeEditModal'
 import { calculateForceLayout } from '../lib/forceLayout'
 
 // Helper function to clean up title text
@@ -30,11 +30,13 @@ interface NodeSphereProps {
   node: ThoughtNode
   onClick: (node: ThoughtNode, event?: any) => void
   onContextMenu: (node: ThoughtNode, event?: any) => void
+  onHover?: (node: ThoughtNode, event?: any) => void
+  onHoverEnd?: () => void
   isHighlighted?: boolean
   onPositionUpdate?: (nodeId: string, position: [number, number, number]) => void
 }
 
-function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false, onPositionUpdate }: NodeSphereProps) {
+function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighlighted = false, onPositionUpdate }: NodeSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const outlineRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
@@ -123,8 +125,14 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false, onPos
           event.stopPropagation()
           onContextMenu(node, event)
         }}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
+        onPointerOver={(event) => {
+          setHovered(true)
+          if (onHover) onHover(node, event)
+        }}
+        onPointerOut={() => {
+          setHovered(false)
+          if (onHoverEnd) onHoverEnd()
+        }}
         scale={hovered ? 1.09 : 1.06}
       >
         <sphereGeometry args={[hovered ? 0.15 : 0.1, 20, 20]} />
@@ -142,8 +150,14 @@ function NodeSphere({ node, onClick, onContextMenu, isHighlighted = false, onPos
           event.stopPropagation()
           onContextMenu(node, event)
         }}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
+        onPointerOver={(event) => {
+          setHovered(true)
+          if (onHover) onHover(node, event)
+        }}
+        onPointerOut={() => {
+          setHovered(false)
+          if (onHoverEnd) onHoverEnd()
+        }}
       >
         <sphereGeometry args={[hovered ? 0.15 : 0.1, 20, 20]} />
         <meshBasicMaterial 
@@ -292,10 +306,15 @@ export default function NodeCanvas() {
   const setSelectedNode = useNodeStore((state) => state.setSelectedNode)
   const setSelectedNodeId = useNodeStore((state) => state.setSelectedNodeId)
   const selectedNodeId = useNodeStore((state) => state.selectedNodeId)
-  // Note: editing functionality removed during cleanup
   const deleteNode = useNodeStore((state) => state.deleteNode)
   const [layoutedNodes, setLayoutedNodes] = useState<ThoughtNode[]>([])
   const [useForceLayout, setUseForceLayout] = useState(true)
+  const [editingNode, setEditingNode] = useState<ThoughtNode | null>(null)
+  const [tooltip, setTooltip] = useState<{
+    node: ThoughtNode
+    x: number
+    y: number
+  } | null>(null)
   const [contextMenu, setContextMenu] = useState<{
     node: ThoughtNode
     x: number
@@ -393,10 +412,27 @@ export default function NodeCanvas() {
 
   const handleEditNode = () => {
     if (contextMenu) {
-      // Edit functionality has been removed
-      // TODO: Implement inline editing or alternative edit method
+      setEditingNode(contextMenu.node)
       setContextMenu(null)
     }
+  }
+
+  const handleNodeHover = (node: ThoughtNode, event?: any) => {
+    if (event) {
+      const rect = document.querySelector('canvas')?.getBoundingClientRect()
+      const x = event.clientX - (rect?.left || 0)
+      const y = event.clientY - (rect?.top || 0)
+      
+      setTooltip({
+        node,
+        x,
+        y
+      })
+    }
+  }
+
+  const handleNodeHoverEnd = () => {
+    setTooltip(null)
   }
 
   const handleDeleteNode = async () => {
@@ -464,6 +500,8 @@ export default function NodeCanvas() {
               node={nodeWithUpdatedPosition}
               onClick={handleNodeClick}
               onContextMenu={handleNodeContextMenu}
+              onHover={handleNodeHover}
+              onHoverEnd={handleNodeHoverEnd}
               isHighlighted={node.id === selectedNodeId}
               onPositionUpdate={handlePositionUpdate}
             />
@@ -484,7 +522,53 @@ export default function NodeCanvas() {
         <fog attach="fog" args={['#ffffff', 15, 60]} />
       </Canvas>
       
-      {/* Note: editing modal removed during cleanup */}
+      {/* Node Edit Modal */}
+      <NodeEditModal
+        node={editingNode}
+        isOpen={!!editingNode}
+        onClose={() => setEditingNode(null)}
+      />
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          style={{
+            position: 'absolute',
+            left: tooltip.x + 15,
+            top: tooltip.y - 10,
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            color: 'white',
+            padding: '12px',
+            borderRadius: '8px',
+            fontSize: '13px',
+            maxWidth: '300px',
+            zIndex: 1000,
+            pointerEvents: 'none',
+            border: '1px solid #4ecdc4',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)'
+          }}
+        >
+          <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#4ecdc4' }}>
+            {tooltip.node.title || 'No Title'}
+          </div>
+          {tooltip.node.comment && (
+            <div style={{ marginBottom: '6px', fontSize: '12px', color: '#ccc' }}>
+              💬 {tooltip.node.comment}
+            </div>
+          )}
+          {tooltip.node.summary && (
+            <div style={{ fontSize: '11px', lineHeight: '1.4', color: '#ddd' }}>
+              📝 {tooltip.node.summary.substring(0, 150)}
+              {tooltip.node.summary.length > 150 ? '...' : ''}
+            </div>
+          )}
+          {tooltip.node.tags && tooltip.node.tags.length > 0 && (
+            <div style={{ marginTop: '6px', fontSize: '11px' }}>
+              🏷️ {tooltip.node.tags.slice(0, 3).join(', ')}
+            </div>
+          )}
+        </div>
+      )}
       
       {/* Context Menu */}
       {contextMenu && (
