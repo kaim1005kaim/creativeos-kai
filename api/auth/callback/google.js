@@ -21,7 +21,19 @@ export default async function handler(req, res) {
   })
 
   if (!code) {
-    return res.status(400).json({ error: 'No authorization code provided' })
+    console.log('❌ No authorization code provided')
+    return res.status(400).send(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>OAuth Error</title></head>
+        <body>
+          <h1>OAuth Error</h1>
+          <p>No authorization code provided</p>
+          <p>Query params: ${JSON.stringify(req.query)}</p>
+          <a href="https://creativeos-kai.vercel.app/">Return to CreativeOS</a>
+        </body>
+      </html>
+    `)
   }
 
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
@@ -167,10 +179,17 @@ export default async function handler(req, res) {
     console.error('Error stack:', error.stack)
     
     // Return detailed error info for debugging
-    res.status(500).json({ 
-      error: error.message || 'Internal server error',
-      details: error.stack,
-      step: 'OAuth processing failed'
-    })
+    res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+        <head><title>OAuth Error</title></head>
+        <body>
+          <h1>OAuth Processing Failed</h1>
+          <p><strong>Error:</strong> ${error.message || 'Internal server error'}</p>
+          <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px;">${error.stack}</pre>
+          <a href="https://creativeos-kai.vercel.app/">Return to CreativeOS</a>
+        </body>
+      </html>
+    `)
   }
 }
