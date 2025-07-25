@@ -231,7 +231,7 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
           {/* Comment */}
           {node.comment && (
             <Text
-              position={[0, 0.2, 0]}
+              position={[0, 0.1, 0]}
               fontSize={0.08}
               color="#4a5568"
               anchorX="left"
@@ -248,7 +248,7 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
           {/* Summary */}
           {node.summary && (
             <Text
-              position={[0, 0, 0]}
+              position={[0, -0.1, 0]}
               fontSize={0.06}
               color="#718096"
               anchorX="left"
@@ -260,23 +260,6 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
             >
               📝 {node.summary.substring(0, 100)}
               {node.summary.length > 100 ? '...' : ''}
-            </Text>
-          )}
-          
-          {/* Tags in 3D space */}
-          {node.tags && node.tags.length > 0 && (
-            <Text
-              position={[0, -0.2, 0]}
-              fontSize={0.05}
-              color="#4ecdc4"
-              anchorX="left"
-              anchorY="middle"
-              outlineWidth={0.003}
-              outlineColor="#ffffff"
-              fillOpacity={0.9}
-              fontWeight="bold"
-            >
-              🏷️ {node.tags.slice(0, 3).join(' • ')}
             </Text>
           )}
         </group>
