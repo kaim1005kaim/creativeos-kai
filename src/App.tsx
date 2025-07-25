@@ -128,14 +128,7 @@ function App() {
           
           // Create node with optimized options for mobile
           const addNode = useNodeStore.getState().addNode
-          await addNode({
-            url: finalUrl,
-            comment,
-            title: '',
-            summary: '',
-            tags: ['shared', 'mobile'],
-            category: 'shared'
-          }, { useMCP })
+          await addNode(finalUrl, comment, { useMCP })
           
           // Clean URL parameters after processing
           window.history.replaceState({}, document.title, window.location.pathname)
