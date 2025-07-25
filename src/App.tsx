@@ -79,38 +79,77 @@ function App() {
     return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
 
-  // Handle shared URL creation
+  // Handle shared URL creation with mobile optimizations
   useEffect(() => {
     const handleSharedUrl = async () => {
       const urlParams = new URLSearchParams(window.location.search)
-      const sharedUrl = urlParams.get('url') || urlParams.get('text')
+      const sharedUrl = urlParams.get('url') || urlParams.get('text') || urlParams.get('title')
       
       if (sharedUrl && !isCreatingSharedNode) {
         setIsCreatingSharedNode(true)
         
         try {
-          // Clean the shared URL (remove tracking parameters, etc.)
-          const cleanUrl = sharedUrl.includes('http') ? sharedUrl : `https://${sharedUrl}`
+          // Enhanced URL cleaning for mobile sharing
+          let cleanUrl = sharedUrl.trim()
           
-          // Create node using existing store method
+          // Handle different URL formats from mobile apps
+          if (!cleanUrl.startsWith('http')) {
+            cleanUrl = `https://${cleanUrl}`
+          }
+          
+          // Clean tracking parameters common in mobile sharing
+          const url = new URL(cleanUrl)
+          const trackingParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 't', 'ref_src', 'ref_url']
+          trackingParams.forEach(param => url.searchParams.delete(param))
+          
+          // X/Twitter mobile URL normalization
+          if (url.hostname.includes('twitter.com') || url.hostname.includes('x.com')) {
+            // Convert mobile.twitter.com to twitter.com
+            url.hostname = 'twitter.com'
+            // Remove mobile-specific parameters
+            url.searchParams.delete('s')
+            url.searchParams.delete('t')
+          }
+          
+          const finalUrl = url.toString()
+          
+          // Auto-detect content type for better processing
+          let comment = 'Shared from mobile'
+          let useMCP = false
+          
+          if (finalUrl.includes('twitter.com') || finalUrl.includes('x.com')) {
+            comment = 'Shared Twitter/X post'
+            useMCP = true // Use MCP for better Twitter content extraction
+          } else if (finalUrl.includes('youtube.com') || finalUrl.includes('youtu.be')) {
+            comment = 'Shared YouTube video'
+          } else if (finalUrl.includes('github.com')) {
+            comment = 'Shared GitHub repository'
+          }
+          
+          // Create node with optimized options for mobile
           const addNode = useNodeStore.getState().addNode
           await addNode({
-            url: cleanUrl,
-            comment: `Shared from mobile: ${cleanUrl}`,
+            url: finalUrl,
+            comment,
             title: '',
             summary: '',
-            tags: ['shared'],
+            tags: ['shared', 'mobile'],
             category: 'shared'
-          })
+          }, { useMCP })
           
           // Clean URL parameters after processing
           window.history.replaceState({}, document.title, window.location.pathname)
           
-          // Show success feedback (you could add a toast notification here)
-          console.log('Shared URL added successfully:', cleanUrl)
+          // Success feedback with more detail
+          console.log('Shared URL processed successfully:', {
+            original: sharedUrl,
+            cleaned: finalUrl,
+            type: comment
+          })
           
         } catch (error) {
           console.error('Failed to create node from shared URL:', error)
+          // TODO: Add user-visible error notification
         } finally {
           setIsCreatingSharedNode(false)
         }
@@ -189,7 +228,7 @@ function App() {
 
   return (
     <div className="app" style={{ backgroundColor: colors.background, color: colors.text }}>
-      {/* Shared URL Loading Overlay */}
+      {/* Enhanced Mobile Loading Overlay */}
       {isCreatingSharedNode && (
         <div style={{
           position: 'fixed',
@@ -197,25 +236,74 @@ function App() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backgroundColor: 'rgba(0, 0, 0, 0.9)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 10000,
-          color: '#fff'
+          color: '#fff',
+          padding: '20px'
         }}>
+          {/* OZ-style loading animation */}
           <div style={{
-            width: '40px',
-            height: '40px',
-            border: '3px solid #333',
-            borderTop: '3px solid #4ecdc4',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            marginBottom: '16px'
-          }} />
-          <p style={{ fontSize: '16px', fontWeight: 'bold' }}>Creating node from shared URL...</p>
-          <p style={{ fontSize: '14px', opacity: 0.8 }}>Please wait while we process the content</p>
+            position: 'relative',
+            marginBottom: '24px'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              border: '4px solid #333',
+              borderTop: '4px solid #4ecdc4',
+              borderRight: '4px solid #ff9f43',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '30px',
+              height: '30px',
+              border: '2px solid #45b7d1',
+              borderTop: '2px solid transparent',
+              borderRadius: '50%',
+              animation: 'spin 0.5s linear infinite reverse'
+            }} />
+          </div>
+          
+          <div style={{ textAlign: 'center', maxWidth: '300px' }}>
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: 'bold', 
+              marginBottom: '8px',
+              color: '#4ecdc4'
+            }}>
+              📱 Processing Shared Content
+            </h3>
+            <p style={{ 
+              fontSize: '14px', 
+              opacity: 0.9,
+              lineHeight: '1.4',
+              marginBottom: '16px'
+            }}>
+              Analyzing URL, extracting content, and generating AI summary...
+            </p>
+            
+            {/* Mobile-friendly progress steps */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '12px',
+              opacity: 0.7
+            }}>
+              <span>🔍 Extracting</span>
+              <span>🤖 AI Analysis</span>
+              <span>💾 Saving</span>
+            </div>
+          </div>
         </div>
       )}
       
