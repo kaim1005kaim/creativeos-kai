@@ -46,16 +46,39 @@ function App() {
     
     // Check for session info in URL (temporary auth handling)
     const urlParams = new URLSearchParams(window.location.search)
-    const sessionParam = urlParams.get('session')
+    const sessionParam = urlParams.get('session') // Old format
+    const shortSessionParam = urlParams.get('s') // New base64 format
     
     console.log('🔍 Auth Debug:', {
       currentUrl: window.location.href,
       hasSessionParam: !!sessionParam,
+      hasShortSessionParam: !!shortSessionParam,
       sessionParamLength: sessionParam?.length || 0,
+      shortSessionParamLength: shortSessionParam?.length || 0,
       allParams: Object.fromEntries(urlParams.entries())
     })
     
-    if (sessionParam) {
+    // Try new base64 format first
+    if (shortSessionParam) {
+      try {
+        console.log('📝 Base64 session param:', shortSessionParam.substring(0, 50) + '...')
+        const decodedSession = atob(shortSessionParam)
+        console.log('🔓 Decoded session:', decodedSession.substring(0, 100) + '...')
+        const sessionData = JSON.parse(decodedSession)
+        console.log('✅ Parsed session data:', sessionData)
+        setUser(sessionData)
+        // Store in localStorage for persistence
+        localStorage.setItem('creativeos_user', JSON.stringify(sessionData))
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname)
+        console.log('💾 Session stored and URL cleaned')
+      } catch (e) {
+        console.error('❌ Failed to parse base64 session data:', e)
+        console.error('Raw base64 session param:', shortSessionParam)
+      }
+    }
+    // Fallback to old format
+    else if (sessionParam) {
       try {
         console.log('📝 Raw session param:', sessionParam.substring(0, 100) + '...')
         const sessionData = JSON.parse(decodeURIComponent(sessionParam))

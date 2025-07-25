@@ -126,9 +126,22 @@ export default async function handler(req, res) {
       picture: user.picture
     }
 
-    // Redirect to home with session data
-    const redirectUrl = `https://creativeos-kai.vercel.app/?session=${encodeURIComponent(JSON.stringify(sessionData))}`
-    console.log('🔄 Redirecting to:', redirectUrl.substring(0, 100) + '...')
+    // Generate a short session ID instead of passing full data in URL
+    const sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36)
+    
+    // Store session temporarily (in production, use Redis or database)
+    // For now, we'll use a simpler approach with shorter data
+    const shortSessionData = `${user.id}|${user.email}|${user.name}|${user.picture}`
+    
+    console.log('📝 Session data length:', JSON.stringify(sessionData).length)
+    console.log('🔗 Short session data:', shortSessionData.substring(0, 50) + '...')
+    
+    // Use base64 encoding to make URL shorter and safer
+    const encodedSession = Buffer.from(JSON.stringify(sessionData)).toString('base64')
+    const redirectUrl = `https://creativeos-kai.vercel.app/?s=${encodedSession}`
+    
+    console.log('🔄 Redirect URL length:', redirectUrl.length)
+    console.log('🔄 Redirecting to:', redirectUrl.substring(0, 120) + '...')
     res.redirect(redirectUrl)
   } catch (error) {
     console.error('OAuth error:', error)
