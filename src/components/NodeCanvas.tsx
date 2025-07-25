@@ -240,6 +240,12 @@ function NodeConnections({ nodes, animatedPositions }: NodeConnectionsProps) {
           const nodeAnimatedPos = animatedPositions.get(node.id) || node.position
           const otherNodeAnimatedPos = animatedPositions.get(otherNode.id) || otherNode.position
           
+          // Skip if either position is invalid
+          if (!nodeAnimatedPos || !otherNodeAnimatedPos || 
+              nodeAnimatedPos.length !== 3 || otherNodeAnimatedPos.length !== 3) {
+            return null
+          }
+          
           // Calculate distance for opacity
           const distance = Math.sqrt(
             Math.pow(nodeAnimatedPos[0] - otherNodeAnimatedPos[0], 2) +
