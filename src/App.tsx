@@ -34,6 +34,7 @@ function App() {
   const [user, setUser] = useState<{ id: string; email: string; name: string; picture: string } | null>(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [isCreatingSharedNode, setIsCreatingSharedNode] = useState(false)
 
   useEffect(() => {
     // Initialize with mock data for demo if not logged in
@@ -77,6 +78,49 @@ function App() {
     
     return () => window.removeEventListener('resize', checkIsMobile)
   }, [])
+
+  // Handle shared URL creation
+  useEffect(() => {
+    const handleSharedUrl = async () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const sharedUrl = urlParams.get('url') || urlParams.get('text')
+      
+      if (sharedUrl && !isCreatingSharedNode) {
+        setIsCreatingSharedNode(true)
+        
+        try {
+          // Clean the shared URL (remove tracking parameters, etc.)
+          const cleanUrl = sharedUrl.includes('http') ? sharedUrl : `https://${sharedUrl}`
+          
+          // Create node using existing store method
+          const addNode = useNodeStore.getState().addNode
+          await addNode({
+            url: cleanUrl,
+            comment: `Shared from mobile: ${cleanUrl}`,
+            title: '',
+            summary: '',
+            tags: ['shared'],
+            category: 'shared'
+          })
+          
+          // Clean URL parameters after processing
+          window.history.replaceState({}, document.title, window.location.pathname)
+          
+          // Show success feedback (you could add a toast notification here)
+          console.log('Shared URL added successfully:', cleanUrl)
+          
+        } catch (error) {
+          console.error('Failed to create node from shared URL:', error)
+        } finally {
+          setIsCreatingSharedNode(false)
+        }
+      }
+    }
+    
+    if (user?.id) {
+      handleSharedUrl()
+    }
+  }, [user?.id, isCreatingSharedNode])
 
   // Load user nodes when user logs in
   useEffect(() => {
@@ -145,6 +189,36 @@ function App() {
 
   return (
     <div className="app" style={{ backgroundColor: colors.background, color: colors.text }}>
+      {/* Shared URL Loading Overlay */}
+      {isCreatingSharedNode && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10000,
+          color: '#fff'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '3px solid #333',
+            borderTop: '3px solid #4ecdc4',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '16px'
+          }} />
+          <p style={{ fontSize: '16px', fontWeight: 'bold' }}>Creating node from shared URL...</p>
+          <p style={{ fontSize: '14px', opacity: 0.8 }}>Please wait while we process the content</p>
+        </div>
+      )}
+      
       <header className="app-header" style={{ backgroundColor: colors.surface, color: colors.text }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
