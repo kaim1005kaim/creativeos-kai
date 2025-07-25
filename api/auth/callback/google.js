@@ -8,8 +8,20 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 module.exports = async function handler(req, res) {
   const { code } = req.query
 
+  console.log('OAuth callback called with code:', code ? 'present' : 'missing')
+  console.log('Environment check:', {
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? 'set' : 'missing',
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? 'set' : 'missing',
+    SUPABASE_URL: supabaseUrl ? 'set' : 'missing'
+  })
+
   if (!code) {
     return res.status(400).json({ error: 'No authorization code provided' })
+  }
+
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    console.error('Missing Google OAuth credentials')
+    return res.status(500).json({ error: 'Server configuration error' })
   }
 
   try {
@@ -29,10 +41,12 @@ module.exports = async function handler(req, res) {
     })
 
     const tokens = await tokenResponse.json()
+    console.log('Token response status:', tokenResponse.status)
+    console.log('Token response:', tokens.error ? `Error: ${tokens.error}` : 'Success')
 
-    if (tokens.error) {
-      console.error('Token error:', tokens)
-      return res.status(400).json({ error: tokens.error })
+    if (!tokenResponse.ok || tokens.error) {
+      console.error('Token exchange failed:', tokens)
+      return res.status(400).json({ error: tokens.error || 'Token exchange failed' })
     }
 
     // Get user info
@@ -43,6 +57,7 @@ module.exports = async function handler(req, res) {
     })
 
     const googleUser = await userResponse.json()
+    console.log('Google user info:', { email: googleUser.email, name: googleUser.name })
 
     // Upsert user in Supabase
     const { data: existingUser } = await supabase
