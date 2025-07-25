@@ -226,7 +226,12 @@ function NodeConnections({ nodes, animatedPositions }: NodeConnectionsProps) {
     <>
       {nodes.flatMap((node, i) =>
         nodes.slice(i + 1).map((otherNode) => {
-          // Create connection between every pair of nodes
+          // Only show connections for linked nodes or very close nodes
+          const isLinked = node.linkedNodeIds?.includes(otherNode.id) || 
+                          otherNode.linkedNodeIds?.includes(node.id)
+          
+          if (!isLinked) return null
+          
           const connectionKey = [node.id, otherNode.id].sort().join('-')
           if (drawnConnections.has(connectionKey)) return null
           drawnConnections.add(connectionKey)
@@ -235,15 +240,17 @@ function NodeConnections({ nodes, animatedPositions }: NodeConnectionsProps) {
           const nodeAnimatedPos = animatedPositions.get(node.id) || node.position
           const otherNodeAnimatedPos = animatedPositions.get(otherNode.id) || otherNode.position
           
-          // Calculate distance to determine line opacity
+          // Calculate distance for opacity
           const distance = Math.sqrt(
             Math.pow(nodeAnimatedPos[0] - otherNodeAnimatedPos[0], 2) +
             Math.pow(nodeAnimatedPos[1] - otherNodeAnimatedPos[1], 2) +
             Math.pow(nodeAnimatedPos[2] - otherNodeAnimatedPos[2], 2)
           )
           
-          // Closer nodes have more visible connections
-          const opacity = Math.max(0.05, 0.3 - distance * 0.02)
+          // Only show if distance is reasonable
+          if (distance > 15) return null
+          
+          const opacity = Math.max(0.1, 0.4 - distance * 0.02)
           
           return (
             <line key={connectionKey}>
@@ -259,7 +266,7 @@ function NodeConnections({ nodes, animatedPositions }: NodeConnectionsProps) {
                 />
               </bufferGeometry>
               <lineBasicMaterial 
-                color="#000000" 
+                color="#333333" 
                 opacity={opacity}
                 transparent
                 linewidth={1}
@@ -399,66 +406,30 @@ export default function NodeCanvas() {
 
   return (
     <>
-      {/* OZ-style Layout Toggle */}
-      <div style={{
-        position: 'absolute',
-        top: '20px',
-        right: '20px',
-        zIndex: 1000,
-        fontFamily: '"Orbitron", "Noto Sans JP", monospace',
-        cursor: 'pointer',
-        userSelect: 'none'
-      }}
-      onClick={toggleForceLayout}
+      {/* Simple Layout Toggle */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: '15px',
+          right: '15px',
+          zIndex: 1000,
+          cursor: 'pointer',
+          userSelect: 'none'
+        }}
+        onClick={toggleForceLayout}
       >
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(78, 205, 196, 0.9) 0%, rgba(69, 183, 209, 0.9) 100%)',
-          border: '2px solid #f13321',
-          borderRadius: '12px',
-          padding: '12px 20px',
-          backdropFilter: 'blur(10px)',
-          boxShadow: '0 8px 32px rgba(241, 51, 33, 0.3)',
-          transition: 'all 0.3s ease',
-          transform: 'perspective(1000px) rotateX(5deg)',
+        <span style={{
+          color: '#f13321',
+          fontSize: '11px',
+          fontWeight: '500',
+          opacity: 0.7,
+          transition: 'opacity 0.2s ease'
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'perspective(1000px) rotateX(0deg) scale(1.05)'
-          e.currentTarget.style.boxShadow = '0 12px 40px rgba(241, 51, 33, 0.5)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'perspective(1000px) rotateX(5deg) scale(1)'
-          e.currentTarget.style.boxShadow = '0 8px 32px rgba(241, 51, 33, 0.3)'
-        }}
+        onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+        onMouseLeave={(e) => e.currentTarget.style.opacity = '0.7'}
         >
-          <div style={{
-            color: '#ffffff',
-            fontSize: '14px',
-            fontWeight: '700',
-            textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
-            letterSpacing: '1px',
-            textTransform: 'uppercase'
-          }}>
-            <span style={{ 
-              color: '#f13321',
-              fontSize: '16px',
-              marginRight: '8px',
-              filter: 'drop-shadow(0 0 4px rgba(241, 51, 33, 0.8))'
-            }}>
-              {useForceLayout ? '◉' : '◎'}
-            </span>
-            {useForceLayout ? 'SIMILARITY' : 'FIXED'}
-          </div>
-          <div style={{
-            color: '#ffffff',
-            fontSize: '10px',
-            fontWeight: '400',
-            opacity: 0.9,
-            marginTop: '2px',
-            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.7)'
-          }}>
-            {useForceLayout ? 'AI CLUSTERING' : 'STATIC GRID'}
-          </div>
-        </div>
+          {useForceLayout ? '類似度' : '固定'}
+        </span>
       </div>
       
       <Canvas 
