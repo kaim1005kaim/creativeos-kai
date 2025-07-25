@@ -122,12 +122,10 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
         ref={outlineRef}
         onClick={(event) => onClick(node, event)}
         onContextMenu={(event) => {
-          console.log('Context menu triggered:', node.title, event)
           event.stopPropagation()
           onContextMenu(node, event)
         }}
         onPointerOver={(event) => {
-          console.log('Node hover outline:', node.title, event)
           setHovered(true)
           if (onHover) onHover(node, event)
         }}
@@ -149,12 +147,10 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
         ref={meshRef}
         onClick={(event) => onClick(node, event)}
         onContextMenu={(event) => {
-          console.log('Main sphere context menu:', node.title, event)
           event.stopPropagation()
           onContextMenu(node, event)
         }}
         onPointerOver={(event) => {
-          console.log('Main sphere hover:', node.title, event)
           setHovered(true)
           if (onHover) onHover(node, event)
         }}
@@ -227,6 +223,78 @@ function NodeSphere({ node, onClick, onContextMenu, onHover, onHoverEnd, isHighl
         >
           🏷️ {node.tags.slice(0, 3).join(' • ')}
         </Text>
+      )}
+
+      {/* 3D Space Tooltip - Fade in on hover */}
+      {hovered && (
+        <group position={[0.8, 0, 0]}>
+          {/* Title */}
+          <Text
+            position={[0, 0.3, 0]}
+            fontSize={0.12}
+            color="#2d3748"
+            anchorX="left"
+            anchorY="middle"
+            outlineWidth={0.01}
+            outlineColor="#ffffff"
+            fillOpacity={0.95}
+            fontWeight="bold"
+          >
+            {node.title || 'No Title'}
+          </Text>
+          
+          {/* Comment */}
+          {node.comment && (
+            <Text
+              position={[0, 0.1, 0]}
+              fontSize={0.08}
+              color="#4a5568"
+              anchorX="left"
+              anchorY="middle"
+              outlineWidth={0.005}
+              outlineColor="#ffffff"
+              fillOpacity={0.9}
+              maxWidth={3}
+            >
+              💬 {node.comment}
+            </Text>
+          )}
+          
+          {/* Summary */}
+          {node.summary && (
+            <Text
+              position={[0, -0.1, 0]}
+              fontSize={0.06}
+              color="#718096"
+              anchorX="left"
+              anchorY="middle"
+              outlineWidth={0.003}
+              outlineColor="#ffffff"
+              fillOpacity={0.85}
+              maxWidth={4}
+            >
+              📝 {node.summary.substring(0, 100)}
+              {node.summary.length > 100 ? '...' : ''}
+            </Text>
+          )}
+          
+          {/* Tags in 3D space */}
+          {node.tags && node.tags.length > 0 && (
+            <Text
+              position={[0, -0.3, 0]}
+              fontSize={0.05}
+              color="#4ecdc4"
+              anchorX="left"
+              anchorY="middle"
+              outlineWidth={0.003}
+              outlineColor="#ffffff"
+              fillOpacity={0.9}
+              fontWeight="bold"
+            >
+              🏷️ {node.tags.slice(0, 3).join(' • ')}
+            </Text>
+          )}
+        </group>
       )}
     </group>
   )
@@ -314,11 +382,6 @@ export default function NodeCanvas() {
   const [layoutedNodes, setLayoutedNodes] = useState<ThoughtNode[]>([])
   const [useForceLayout, setUseForceLayout] = useState(true)
   const [editingNode, setEditingNode] = useState<ThoughtNode | null>(null)
-  const [tooltip, setTooltip] = useState<{
-    node: ThoughtNode
-    x: number
-    y: number
-  } | null>(null)
   const [contextMenu, setContextMenu] = useState<{
     node: ThoughtNode
     x: number
@@ -429,22 +492,13 @@ export default function NodeCanvas() {
     }
   }
 
+  // 3D tooltips are now handled directly in NodeSphere component
   const handleNodeHover = (node: ThoughtNode, event?: any) => {
-    if (event?.nativeEvent) {
-      const rect = document.querySelector('canvas')?.getBoundingClientRect()
-      const x = event.nativeEvent.clientX - (rect?.left || 0)
-      const y = event.nativeEvent.clientY - (rect?.top || 0)
-      
-      setTooltip({
-        node,
-        x,
-        y
-      })
-    }
+    // No longer needed - 3D tooltip is handled by hover state in NodeSphere
   }
 
   const handleNodeHoverEnd = () => {
-    setTooltip(null)
+    // No longer needed - 3D tooltip is handled by hover state in NodeSphere
   }
 
   const handleDeleteNode = async () => {
@@ -541,46 +595,6 @@ export default function NodeCanvas() {
         onClose={() => setEditingNode(null)}
       />
 
-      {/* Tooltip */}
-      {tooltip && (
-        <div
-          style={{
-            position: 'absolute',
-            left: tooltip.x + 15,
-            top: tooltip.y - 10,
-            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-            color: 'white',
-            padding: '12px',
-            borderRadius: '8px',
-            fontSize: '13px',
-            maxWidth: '300px',
-            zIndex: 1000,
-            pointerEvents: 'none',
-            border: '1px solid #4ecdc4',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.3)'
-          }}
-        >
-          <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#4ecdc4' }}>
-            {tooltip.node.title || 'No Title'}
-          </div>
-          {tooltip.node.comment && (
-            <div style={{ marginBottom: '6px', fontSize: '12px', color: '#ccc' }}>
-              💬 {tooltip.node.comment}
-            </div>
-          )}
-          {tooltip.node.summary && (
-            <div style={{ fontSize: '11px', lineHeight: '1.4', color: '#ddd' }}>
-              📝 {tooltip.node.summary.substring(0, 150)}
-              {tooltip.node.summary.length > 150 ? '...' : ''}
-            </div>
-          )}
-          {tooltip.node.tags && tooltip.node.tags.length > 0 && (
-            <div style={{ marginTop: '6px', fontSize: '11px' }}>
-              🏷️ {tooltip.node.tags.slice(0, 3).join(', ')}
-            </div>
-          )}
-        </div>
-      )}
       
       {/* Context Menu */}
       {contextMenu && (
